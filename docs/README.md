@@ -1,12 +1,10 @@
-# Documentation Module
+# Documentation
 
-This folder will contain project documentation.
+This folder contains project documentation.
 
-**Planned contents**
+### Includes:
 - Architecture diagrams
-- ER diagrams
-- Test plans and QA reports
-- API documentation
-- Final project report / screenshots
-
-**Status:** To be populated as the project progresses.
+- API contracts
+- DB schema
+- Test plans
+- Presentation PDFs
