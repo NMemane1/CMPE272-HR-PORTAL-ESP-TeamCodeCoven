@@ -1,11 +1,19 @@
 # Backend Module
 
-This folder will contain the backend service for the HR Portal.
+This folder will contain the backend service responsible for:
 
-**Responsibilities**
 - Authentication & authorization
-- REST API endpoints (employees, payroll, performance)
+- Employee, payroll, and performance APIs
 - Business logic & validations
-- Database integration (MySQL)
+- DB connectivity (MySQL) and ORM models
 
-**Status:** To be implemented.
+## Tech Stack (Tentative)
+- Spring Boot **or** Node.js (finalize with team)
+- MySQL
+- JWT / SSO (later stage)
+
+## TODO
+- [ ] Initialize backend framework
+- [ ] Define API routes
+- [ ] Add DB schema + models
+- [ ] Write unit tests
