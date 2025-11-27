@@ -14,10 +14,17 @@ services:
       - "3000:3000"
 
   db:
-    image: mysql:8.0
-    restart: always
+    image: mysql:8
+    container_name: hr-mysql-db-c
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: espdb
+      MYSQL_DATABASE: employees
     ports:
       - "3306:3306"
+    volumes:
+      - ./test_db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
