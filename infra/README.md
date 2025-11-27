@@ -1,11 +1,15 @@
 # Infra / DevOps Module
 
-This folder will contain infrastructure and DevOps configuration.
+This folder contains infrastructure and deployment configuration.
 
-**Planned contents**
-- Dockerfiles for backend and frontend
-- `docker-compose.yml` for local setup
-- Jenkins pipeline configuration
-- AWS deployment scripts / notes
+### This module will include:
+- Dockerfiles (backend + frontend)
+- docker-compose.yml for local development
+- Jenkins pipeline config (CI/CD)
+- AWS deployment notes
 
-**Status:** To be implemented.
+## TODO
+- [ ] Add Dockerfile for backend
+- [ ] Add Dockerfile for frontend
+- [ ] Add docker-compose.yml
+- [ ] Add Jenkinsfile
