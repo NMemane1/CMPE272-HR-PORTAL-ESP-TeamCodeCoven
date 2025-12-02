@@ -1,0 +1,29 @@
+name: CI Backend
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-backend.yml'
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build & test backend
+        working-directory: backend
+        run: |
+          ./mvnw -q -B test
+          ./mvnw -q -B package
+          
+          ./mvnw -q -B -DskipTests package
