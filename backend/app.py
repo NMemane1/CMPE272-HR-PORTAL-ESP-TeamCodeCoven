@@ -8,3 +8,6 @@ def health():
 @app.get("/api/employees")
 def employees():
     return jsonify([{"emp_no": 10001, "first_name": "Mock", "last_name": "User"}])
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
