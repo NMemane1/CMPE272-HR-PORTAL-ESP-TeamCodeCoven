@@ -59,15 +59,23 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
 
         // Authorization rules
        .authorizeHttpRequests(auth -> auth
-    // Allow auth + employee APIs + H2 console + error page without auth
-    .requestMatchers(
+    // Authorization rules
+    // We allow open access to:
+    //   - /api/auth/**           → login, /me
+    //   - /api/employees/**      → mock CRUD
+    //   - /api/payroll/**        → mock payroll API
+    //   - /api/performance/**    → mock performance API
+    //   - /h2-console/**         → database UI
+    // Everything else requires authentication.
+   .requestMatchers(
         "/api/auth/**",
         "/api/employees/**",
+        "/api/payroll/**",
+        "/api/performance/**",
         "/h2-console/**",
         "/error"
-    ).permitAll()
-    // Everything else requires authentication
-    .anyRequest().authenticated()
+).permitAll()
+.anyRequest().authenticated()
 )
 
         // (Optional) form login if you still want Spring's default login page

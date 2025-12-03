@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,60 +12,135 @@ import java.util.Map;
 @RequestMapping("/api/employees")
 public class EmployeeController {
 
-    // Simple in-memory "DB" just for demo
-    private static final List<Map<String, Object>> EMPLOYEES = new ArrayList<>();
+    // Simple in-memory Employee model
+    public static class Employee {
+        public Long id;
+        public String name;
+        public String email;
+        public String department;
+        public String title;
+        public String status;
+
+        public Employee(Long id,
+                        String name,
+                        String email,
+                        String department,
+                        String title,
+                        String status) {
+            this.id = id;
+            this.name = name;
+            this.email = email;
+            this.department = department;
+            this.title = title;
+            this.status = status;
+        }
+    }
+
+    // Request DTO (for POST / PUT)
+    public static class EmployeeRequest {
+        public String name;
+        public String email;
+        public String department;
+        public String title;
+        public String status; // optional; default ACTIVE
+    }
+
+    // Mock in-memory list
+    private static final List<Employee> EMPLOYEES = new ArrayList<>();
 
     static {
-        // id 1 – Erin Employee
-        Map<String, Object> e1 = new HashMap<>();
-        e1.put("id", 1L);
-        e1.put("name", "Erin Employee");
-        e1.put("email", "employee@company.com");
-        e1.put("department", "Development");
-        e1.put("title", "Software Engineer");
-        e1.put("status", "ACTIVE");
-        EMPLOYEES.add(e1);
-
-        // id 2 – Manny Manager
-        Map<String, Object> e2 = new HashMap<>();
-        e2.put("id", 2L);
-        e2.put("name", "Manny Manager");
-        e2.put("email", "manager@company.com");
-        e2.put("department", "Development");
-        e2.put("title", "Engineering Manager");
-        e2.put("status", "ACTIVE");
-        EMPLOYEES.add(e2);
+        EMPLOYEES.add(new Employee(
+                1L,
+                "Erin Employee",
+                "employee@company.com",
+                "Development",
+                "Software Engineer",
+                "ACTIVE"
+        ));
+        EMPLOYEES.add(new Employee(
+                2L,
+                "Manny Manager",
+                "manager@company.com",
+                "Development",
+                "Engineering Manager",
+                "ACTIVE"
+        ));
     }
 
-    // 1) GET /api/employees – list all
+    // ---------- GET all ----------
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> getAllEmployees() {
-        return ResponseEntity.ok(EMPLOYEES);
+    public List<Employee> getAllEmployees() {
+        return EMPLOYEES;
     }
 
-    // 2) GET /api/employees/{id} – find one
+    // ---------- GET by id ----------
     @GetMapping("/{id}")
     public ResponseEntity<?> getEmployeeById(@PathVariable Long id) {
         return EMPLOYEES.stream()
-                .filter(e -> e.get("id").equals(id))
+                .filter(e -> e.id.equals(id))
                 .findFirst()
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
-                .orElseGet(() ->
-                        ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                .body(Map.of("message", "Employee not found"))
-                );
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Employee not found")));
     }
 
-    // 3) POST /api/employees – create a new one (dummy)
+    // ---------- POST (create) ----------
     @PostMapping
-    public ResponseEntity<Map<String, Object>> createEmployee(@RequestBody Map<String, Object> payload) {
-        long newId = EMPLOYEES.size() + 1L;
-        Map<String, Object> newEmp = new HashMap<>(payload);
-        newEmp.put("id", newId);
-        if (!newEmp.containsKey("status")) {
-            newEmp.put("status", "ACTIVE");
+    public ResponseEntity<Employee> createEmployee(@RequestBody EmployeeRequest req) {
+        long nextId = EMPLOYEES.stream()
+                .mapToLong(e -> e.id)
+                .max()
+                .orElse(0L) + 1;
+
+        Employee e = new Employee(
+                nextId,
+                req.name,
+                req.email,
+                req.department,
+                req.title,
+                req.status != null ? req.status : "ACTIVE"
+        );
+        EMPLOYEES.add(e);
+        return ResponseEntity.status(HttpStatus.CREATED).body(e);
+    }
+
+    // ---------- PUT (update) ----------
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateEmployee(
+            @PathVariable Long id,
+            @RequestBody EmployeeRequest req
+    ) {
+        for (Employee e : EMPLOYEES) {
+            if (e.id.equals(id)) {
+                // Only update fields that are provided (non-null)
+                if (req.name != null) e.name = req.name;
+                if (req.email != null) e.email = req.email;
+                if (req.department != null) e.department = req.department;
+                if (req.title != null) e.title = req.title;
+                if (req.status != null) e.status = req.status;
+
+                return ResponseEntity.ok(e);
+            }
         }
-        EMPLOYEES.add(newEmp);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newEmp);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", "Employee not found"));
+    }
+
+    // ---------- DELETE ----------
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
+        boolean removed = EMPLOYEES.removeIf(e -> e.id.equals(id));
+
+        if (!removed) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Employee not found"));
+        }
+
+        // For demo, return a simple JSON instead of empty 204
+        return ResponseEntity.ok(Map.of(
+                "message", "Employee deleted",
+                "id", id
+        ));
     }
 }
