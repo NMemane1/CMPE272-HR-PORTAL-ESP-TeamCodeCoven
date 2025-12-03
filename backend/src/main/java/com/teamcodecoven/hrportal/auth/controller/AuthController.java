@@ -37,4 +37,14 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "Invalid credentials"));
     }
+    @GetMapping("/me")
+public ResponseEntity<?> currentUser() {
+    return ResponseEntity.ok(
+        Map.of(
+            "email", "nikita.memane@sjsu.edu",
+            "name", "Nikita Memane",
+            "role", "EMPLOYEE"
+        )
+    );
+}
 }

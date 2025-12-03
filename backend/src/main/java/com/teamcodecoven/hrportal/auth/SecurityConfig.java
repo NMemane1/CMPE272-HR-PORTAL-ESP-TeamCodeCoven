@@ -5,7 +5,6 @@ import com.teamcodecoven.hrportal.auth.repository.UserAccountRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -59,16 +58,17 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         .csrf(csrf -> csrf.disable())
 
         // Authorization rules
-        .authorizeHttpRequests(auth -> auth
-            // Allow login endpoint + H2 console + error page without auth
-            .requestMatchers(
-                "/api/auth/login",
-                "/h2-console/**",
-                "/error"
-            ).permitAll()
-            // Everything else requires authentication
-            .anyRequest().authenticated()
-        )
+       .authorizeHttpRequests(auth -> auth
+    // Allow auth + employee APIs + H2 console + error page without auth
+    .requestMatchers(
+        "/api/auth/**",
+        "/api/employees/**",
+        "/h2-console/**",
+        "/error"
+    ).permitAll()
+    // Everything else requires authentication
+    .anyRequest().authenticated()
+)
 
         // (Optional) form login if you still want Spring's default login page
         .formLogin(form -> form
