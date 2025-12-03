@@ -1,24 +1,40 @@
-/*
 package com.teamcodecoven.hrportal.auth.controller;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-@Controller
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/auth")
 public class AuthController {
 
-    // Show login page (GET)
-    @GetMapping("/auth/login")
-    public String loginPage() {
-        // IMPORTANT: view name is "login123", NOT "login"
-        // This maps to src/main/resources/templates/login123.html
-        return "login123";
+    // Simple DTO for the request body
+    public static class LoginRequest {
+        public String email;
+        public String password;
     }
 
-    // Home after login
-    @GetMapping({"/", "/home"})
-    public String homePage() {
-        return "home";   // src/main/resources/templates/home.html
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        // ⚠️ Demo logic: hard-coded check for now
+        if ("nikita.memane@sjsu.edu".equals(request.email)
+                && "nrm123".equals(request.password)) {
+
+            // This JSON is what frontend / Postman will see
+            return ResponseEntity.ok(
+                    Map.of(
+                            "email", request.email,
+                            "name", "Nikita Memane",
+                            "role", "EMPLOYEE",
+                            "message", "Login successful"
+                    )
+            );
+        }
+
+        // Wrong credentials
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Invalid credentials"));
     }
 }
-*/

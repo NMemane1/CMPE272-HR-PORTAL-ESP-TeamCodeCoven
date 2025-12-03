@@ -52,26 +52,38 @@ public class SecurityConfig {
     }
 
     // 4) HTTP security rules – use DEFAULT Spring login page at /login
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   DaoAuthenticationProvider authProvider) throws Exception {
+   @Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        // We are using a JSON API (React frontend), so disable CSRF tokens
+        .csrf(csrf -> csrf.disable())
 
-        http.authenticationProvider(authProvider);
+        // Authorization rules
+        .authorizeHttpRequests(auth -> auth
+            // Allow login endpoint + H2 console + error page without auth
+            .requestMatchers(
+                "/api/auth/login",
+                "/h2-console/**",
+                "/error"
+            ).permitAll()
+            // Everything else requires authentication
+            .anyRequest().authenticated()
+        )
 
-        http
-            .authorizeHttpRequests(auth -> auth
-                    // H2 console is protected; you must log in first
-                    .requestMatchers("/h2-console/**").authenticated()
-                    // everything else can be public (adjust later if needed)
-                    .anyRequest().permitAll()
-            )
-            // H2 console support
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
-            .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
-            // ✅ default Spring Security login form at /login
-            .formLogin(Customizer.withDefaults())
-            .logout(logout -> logout.permitAll());
+        // (Optional) form login if you still want Spring's default login page
+        .formLogin(form -> form
+            .loginPage("/login")   // or remove this line if you use only React login
+            .permitAll()
+        )
 
-        return http.build();
-    }
+        .logout(logout -> logout
+            .logoutUrl("/logout")
+            .permitAll()
+        );
+
+    // Needed so H2 console works inside a frame
+    http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+
+    return http.build();
+}
 }
