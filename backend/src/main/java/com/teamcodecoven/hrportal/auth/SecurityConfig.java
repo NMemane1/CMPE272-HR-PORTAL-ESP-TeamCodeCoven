@@ -2,32 +2,28 @@ package com.teamcodecoven.hrportal.auth;
 
 import com.teamcodecoven.hrportal.auth.entity.UserAccount;
 import com.teamcodecoven.hrportal.auth.repository.UserAccountRepository;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.security.web.SecurityFilterChain;
-
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // 1) Load users from USERS table (login via email)
+    // 1) Load users from USERS table (email as username)
     @Bean
     public UserDetailsService userDetailsService(UserAccountRepository userRepo) {
         return username -> {
@@ -35,8 +31,8 @@ public class SecurityConfig {
                     .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
             return User.withUsername(user.getEmail())
-                    .password(user.getPasswordHash())    // BCrypt hash stored in DB
-                    .roles(user.getRole())               // e.g. "EMPLOYEE", "ADMIN"
+                    .password(user.getPasswordHash())  // BCrypt hashed password
+                    .roles(user.getRole())             // e.g. EMPLOYEE, MANAGER, HR_ADMIN
                     .build();
         };
     }
@@ -47,7 +43,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // 3) DAO Authentication provider
+    // 3) Authentication provider
     @Bean
     public DaoAuthenticationProvider authProvider(
             UserDetailsService userDetailsService,
@@ -59,65 +55,52 @@ public class SecurityConfig {
         return provider;
     }
 
-    // 4) Security filter chain
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            // Enable CORS so frontend at http://localhost:3000 can call /api/**
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-            // Disable CSRF because backend serves JSON API consumed by React
-            .csrf(csrf -> csrf.disable())
-
-            // Authorization rules
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/api/auth/**",        // login + /me
-                    "/api/employees/**",   // employee mock CRUD
-                    "/api/payroll/**",     // payroll mock API
-                    "/api/performance/**", // performance mock API
-                    "/h2-console/**",      // database UI
-                    "/error"
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
-
-            // Optional: Allow default Spring login page
-            .formLogin(form -> form
-                .loginPage("/login")
-                .permitAll()
-            )
-
-            // Logout
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .permitAll()
-            );
-
-        // Allow H2 console in browser frames
-        http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
-
-        return http.build();
-    }
-
-    // 5) CORS configuration for frontend (fixes Katherine's issue)
+    // 4) CORS configuration for React frontend
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-
-        config.addAllowedOrigin("http://localhost:3000");  // React frontend
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:3000",
+                "http://127.0.0.1:3000"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
-        config.addAllowedHeader("*");
-
-        config.addAllowedMethod("GET");
-        config.addAllowedMethod("POST");
-        config.addAllowedMethod("PUT");
-        config.addAllowedMethod("DELETE");
-        config.addAllowedMethod("OPTIONS");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", config);
-
+        source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    // 5) HTTP Security rules
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/auth/**",       // login, me
+                                "/api/employees/**",  // employee mock CRUD
+                                "/api/payroll/**",    // payroll mock APIs
+                                "/api/performance/**", // performance mock APIs
+                                "/h2-console/**",     // H2 database console
+                                "/error"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .permitAll()
+                );
+
+        // Allow H2 console inside an iframe
+        http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+
+        return http.build();
     }
 }

@@ -16,35 +16,56 @@ public class AuthController {
         public String password;
     }
 
+    // Helper to build a standard login success payload
+    private Map<String, Object> buildUserResponse(String email,
+                                                  String name,
+                                                  String role) {
+        return Map.of(
+                "email", email,
+                "name", name,
+                "role", role,
+                "message", "Login successful"
+        );
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        // ⚠️ Demo logic: hard-coded check for now
-        if ("nikita.memane@sjsu.edu".equals(request.email)
-                && "nrm123".equals(request.password)) {
+        String email = request.email;
+        String password = request.password;
 
-            // This JSON is what frontend / Postman will see
+        // 🔹 Dummy users for RBAC testing (for Shilpa)
+        if ("employee@test.com".equals(email) && "password123".equals(password)) {
             return ResponseEntity.ok(
-                    Map.of(
-                            "email", request.email,
-                            "name", "Nikita Memane",
-                            "role", "EMPLOYEE",
-                            "message", "Login successful"
-                    )
+                    buildUserResponse(email, "Employee User", "EMPLOYEE")
             );
         }
 
-        // Wrong credentials
+        if ("manager@test.com".equals(email) && "password123".equals(password)) {
+            return ResponseEntity.ok(
+                    buildUserResponse(email, "Manager User", "MANAGER")
+            );
+        }
+
+        if ("hradmin@test.com".equals(email) && "password123".equals(password)) {
+            return ResponseEntity.ok(
+                    buildUserResponse(email, "HR Admin User", "HR_ADMIN")
+            );
+        }
+
+        // ❌ Anything else = invalid credentials
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "Invalid credentials"));
     }
+
+    // Simple "current user" endpoint (still a dummy user)
     @GetMapping("/me")
-public ResponseEntity<?> currentUser() {
-    return ResponseEntity.ok(
-        Map.of(
-            "email", "nikita.memane@sjsu.edu",
-            "name", "Nikita Memane",
-            "role", "EMPLOYEE"
-        )
-    );
-}
+    public ResponseEntity<?> currentUser() {
+        return ResponseEntity.ok(
+                Map.of(
+                        "email", "employee@test.com",
+                        "name", "Employee User",
+                        "role", "EMPLOYEE"
+                )
+        );
+    }
 }
