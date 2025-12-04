@@ -1,0 +1,54 @@
+name: Build & Deploy HR Backend
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AWS_REGION: us-west-1
+      ECR_REGISTRY: 285795751798.dkr.ecr.us-west-1.amazonaws.com
+      ECR_REPO: hr-backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::285795751798:role/gha-ecr-push-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION \
+          | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+      - name: Build and Push Backend Image
+        run: |
+          GIT_SHA=$(git rev-parse --short HEAD)
+          IMAGE_TAG=${GIT_SHA}
+          docker build -t $ECR_REPO:$IMAGE_TAG ./backend
+          docker tag $ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo env REGION=${{ env.AWS_REGION }} \
+              ECR_REG=${{ env.ECR_REGISTRY }} \
+              BACKEND_IMAGE=${{ env.ECR_REPO }}:${{ env.IMAGE_TAG }} \
+              VERSION=${{ env.IMAGE_TAG }} \
+              bash /opt/hr-portal/deploy_ecr.sh
+
