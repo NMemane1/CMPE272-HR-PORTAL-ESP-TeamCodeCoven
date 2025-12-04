@@ -1,9 +1,7 @@
 // Toggle this with .env: VITE_USE_MOCK=true/false
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "false";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://ec2-54-176-21-21.us-west-1.compute.amazonaws.com:8080";
-
+const USE_MOCK = "false";
+const API_BASE_URL = "http://ec2-54-176-21-21.us-west-1.compute.amazonaws.com:8080";
+  
 // ---------- MOCK DATA ---------- //
 const MOCK_USERS_BY_EMAIL = {
   "employee@company.com": {
