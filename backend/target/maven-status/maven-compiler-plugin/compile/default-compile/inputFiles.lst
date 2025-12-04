@@ -1,0 +1,11 @@
+/Users/nikitame/CMPE272-HR-PORTAL-ESP-TeamCodeCoven/backend/src/main/java/com/teamcodecoven/hrportal/HrPortalBackendApplication.java
+/Users/nikitame/CMPE272-HR-PORTAL-ESP-TeamCodeCoven/backend/src/main/java/com/teamcodecoven/hrportal/auth/AuthDataInitializer.java
+/Users/nikitame/CMPE272-HR-PORTAL-ESP-TeamCodeCoven/backend/src/main/java/com/teamcodecoven/hrportal/auth/SecurityConfig.java
+/Users/nikitame/CMPE272-HR-PORTAL-ESP-TeamCodeCoven/backend/src/main/java/com/teamcodecoven/hrportal/auth/controller/AuthController.java
+/Users/nikitame/CMPE272-HR-PORTAL-ESP-TeamCodeCoven/backend/src/main/java/com/teamcodecoven/hrportal/auth/dto/LoginRequest.java
+/Users/nikitame/CMPE272-HR-PORTAL-ESP-TeamCodeCoven/backend/src/main/java/com/teamcodecoven/hrportal/auth/dto/LoginResponseDto.java
+/Users/nikitame/CMPE272-HR-PORTAL-ESP-TeamCodeCoven/backend/src/main/java/com/teamcodecoven/hrportal/auth/entity/UserAccount.java
+/Users/nikitame/CMPE272-HR-PORTAL-ESP-TeamCodeCoven/backend/src/main/java/com/teamcodecoven/hrportal/auth/repository/UserAccountRepository.java
+/Users/nikitame/CMPE272-HR-PORTAL-ESP-TeamCodeCoven/backend/src/main/java/com/teamcodecoven/hrportal/auth/service/AuthService.java
+/Users/nikitame/CMPE272-HR-PORTAL-ESP-TeamCodeCoven/backend/src/main/java/com/teamcodecoven/hrportal/auth/service/DbUserDetailsService.java
+/Users/nikitame/CMPE272-HR-PORTAL-ESP-TeamCodeCoven/backend/src/main/java/com/teamcodecoven/hrportal/home/HomeController.java
