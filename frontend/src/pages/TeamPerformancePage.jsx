@@ -446,14 +446,6 @@ export default function TeamPerformancePage() {
           )}
         </section>
       )}
-
-      {/* Debug */}
-      <section className="bg-white rounded-xl shadow p-4">
-        <h2 className="text-lg font-semibold mb-2">Debug: employees</h2>
-        <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto">
-          {JSON.stringify(employees, null, 2)}
-        </pre>
-      </section>
     </div>
   );
 }

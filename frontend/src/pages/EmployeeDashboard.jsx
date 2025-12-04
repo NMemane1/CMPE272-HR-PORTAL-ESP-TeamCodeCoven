@@ -137,25 +137,7 @@ export default function EmployeeDashboard() {
           </>
         )}
       </section>
-
-      {/* Debug panel */}
-      <section className="bg-white rounded-xl shadow p-4">
-        <h2 className="text-lg font-semibold mb-2">Debug: Employee + Payroll</h2>
-        <div className="grid md:grid-cols-2 gap-4 text-xs">
-          <div>
-            <h3 className="font-semibold mb-1">Employee</h3>
-            <pre className="bg-gray-100 p-2 rounded overflow-x-auto">
-              {JSON.stringify(employee, null, 2)}
-            </pre>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-1">Payroll</h3>
-            <pre className="bg-gray-100 p-2 rounded overflow-x-auto">
-              {JSON.stringify(payroll, null, 2)}
-            </pre>
-          </div>
-        </div>
-      </section>
+      
     </div>
   );
 }

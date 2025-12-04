@@ -250,13 +250,6 @@ export default function AdminUsersPage() {
           <h2 className="text-lg font-semibold mb-2">
             {isCreateOpen ? "Add Employee" : "Edit Employee"}
           </h2>
-          <p className="text-xs text-gray-500 mb-4">
-            Fields map to the Employees API:
-            <code className="ml-1 text-[11px]">
-              {`{ name, email, department, title, status }`}
-            </code>
-          </p>
-
           <form
             onSubmit={isCreateOpen ? handleCreate : handleUpdate}
             className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm max-w-xl"
@@ -352,14 +345,6 @@ export default function AdminUsersPage() {
           </form>
         </section>
       )}
-
-      {/* Debug */}
-      <section className="bg-white rounded-xl shadow p-4">
-        <h2 className="text-lg font-semibold mb-2">Debug: employees</h2>
-        <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto">
-          {JSON.stringify(employees, null, 2)}
-        </pre>
-      </section>
     </div>
   );
 }
