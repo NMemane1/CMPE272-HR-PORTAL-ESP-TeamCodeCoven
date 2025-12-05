@@ -2,14 +2,14 @@ name: Build & Deploy HR Frontend
 
 on:
   push:
-    branches: [ main ]         
-  workflow_dispatch:           
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write          
+      id-token: write
       contents: read
 
     env:
@@ -18,29 +18,69 @@ jobs:
       ECR_REPO: hr-frontend
 
     steps:
-     
+      # 1. get code
       - uses: actions/checkout@v4
 
-   
+      # 2.configure GitHub Actions credentials to AWS
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::285795751798:role/gha-ecr-push-role
           aws-region: ${{ env.AWS_REGION }}
 
-     
+      # 3. Login to ECR
       - name: Login to ECR
         run: |
           aws ecr get-login-password --region $AWS_REGION \
           | docker login --username AWS --password-stdin $ECR_REGISTRY
 
-  
+      # 4. build and push image
       - name: Build and Push Frontend Image
         run: |
           GIT_SHA=$(git rev-parse --short HEAD)
           IMAGE_TAG=${GIT_SHA}
-          docker build -t $ECR_REPO:$IMAGE_TAG ./frontend  
+
+          # build frontend image
+          docker build -t $ECR_REPO:$IMAGE_TAG ./frontend
+
+          # tag & push to ECR
           docker tag $ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+
+        
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
-  
+      # 5. SSH to EC2，deploy frontend
+      - name: Deploy Frontend to EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -euxo pipefail
+
+            # 
+            AWS_REGION=${AWS_REGION}
+            ECR_REGISTRY=${ECR_REGISTRY}
+            ECR_REPO=${ECR_REPO}
+            IMAGE_TAG=${IMAGE_TAG}
+
+            echo "Deploying frontend image: $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG"
+
+            # login to ECR from ec2
+            aws ecr get-login-password --region $AWS_REGION \
+              | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+            # pull latest image
+            docker pull $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+
+            #remove old one
+            docker rm -f hr-frontend 2>/dev/null || true
+
+            # start new one, listen to 80 port
+            docker run -d --name hr-frontend \
+              -p 80:80 \
+              $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+
+            docker ps
+
