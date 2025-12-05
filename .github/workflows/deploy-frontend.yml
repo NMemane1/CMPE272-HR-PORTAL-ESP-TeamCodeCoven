@@ -44,16 +44,3 @@ jobs:
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
   
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            sudo env REGION=${{ env.AWS_REGION }} \
-              ECR_REG=${{ env.ECR_REGISTRY }} \
-              BACKEND_IMAGE=hr-backend:${{ env.IMAGE_TAG }} \
-              FRONTEND_IMAGE=${{ env.ECR_REPO }}:${{ env.IMAGE_TAG }} \
-              VERSION=${{ env.IMAGE_TAG }} \
-              bash /opt/hr-portal/deploy_ecr.sh
