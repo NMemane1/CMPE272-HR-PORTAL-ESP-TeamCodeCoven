@@ -56,14 +56,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: AWS_REGION,ECR_REGISTRY,ECR_REPO,IMAGE_TAG
           script: |
             set -euxo pipefail
-
-            # 
-            AWS_REGION=${AWS_REGION}
-            ECR_REGISTRY=${ECR_REGISTRY}
-            ECR_REPO=${ECR_REPO}
-            IMAGE_TAG=${IMAGE_TAG}
 
             echo "Deploying frontend image: $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG"
 
