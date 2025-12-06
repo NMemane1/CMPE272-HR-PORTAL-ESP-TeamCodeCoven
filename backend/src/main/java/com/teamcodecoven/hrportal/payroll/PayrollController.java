@@ -8,9 +8,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
-@RequestMapping("/api/employees")
+@RequestMapping("/api")
 public class PayrollController {
 
+    // employeeId -> list of payroll records
     private final Map<Long, List<PayrollRecord>> payrollByEmployee = new ConcurrentHashMap<>();
     private final AtomicLong payrollIdSeq = new AtomicLong(1L);
 
@@ -38,19 +39,23 @@ public class PayrollController {
         payrollByEmployee.put(1L, emp1);
     }
 
-    @GetMapping("/{employeeId}/payroll")
+    // -------------------------------------------------
+    // 1) Per-employee payroll (used by My Payroll, etc.)
+    // -------------------------------------------------
+
+    @GetMapping("/employees/{employeeId}/payroll")
     public ResponseEntity<List<PayrollRecord>> getPayrollForEmployee(
             @PathVariable Long employeeId
     ) {
         List<PayrollRecord> list = payrollByEmployee.get(employeeId);
         if (list == null) {
-            // Return empty list instead of 404 so UI doesn't scream
+            // 200 with empty list → UI shows "No payroll records"
             return ResponseEntity.ok(Collections.emptyList());
         }
         return ResponseEntity.ok(list);
     }
 
-    @PostMapping("/{employeeId}/payroll")
+    @PostMapping("/employees/{employeeId}/payroll")
     public ResponseEntity<PayrollRecord> createPayrollRecord(
             @PathVariable Long employeeId,
             @RequestBody PayrollRecord payload
@@ -75,5 +80,46 @@ public class PayrollController {
         );
         list.add(record);
         return ResponseEntity.ok(record);
+    }
+
+    // -------------------------------------------------
+    // 2) Global payroll (used by Admin Dashboard & Team Payroll)
+    //    Called as: GET /api/payroll?month=YYYY-MM&department=Dept
+    // -------------------------------------------------
+
+    @GetMapping("/payroll")
+    public ResponseEntity<List<Map<String, Object>>> getGlobalPayroll(
+            @RequestParam(name = "month", required = false) String month,
+            @RequestParam(name = "department", required = false) String department
+    ) {
+        // For your demo, we keep this very simple:
+        // - Flatten all payroll records
+        // - Optionally filter by month (ignore department for now)
+        // - Return lightweight summary objects that match frontend expectations
+
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (List<PayrollRecord> records : payrollByEmployee.values()) {
+            for (PayrollRecord r : records) {
+
+                if (month != null && !month.isBlank() && !month.equals(r.getMonth())) {
+                    continue; // skip different months
+                }
+
+                Map<String, Object> item = new HashMap<>();
+                item.put("id", r.getId());
+                item.put("employeeId", r.getEmployeeId());
+                item.put("employeeName", "Employee " + r.getEmployeeId()); // simple label
+                item.put("department", "Development"); // demo value
+                item.put("month", r.getMonth());
+                item.put("netPay", r.getNetPay());
+
+                result.add(item);
+            }
+        }
+
+        // If there are no matching records, we still return 200 with [].
+        // Frontend will show "No payroll records found for this month" but NO red error.
+        return ResponseEntity.ok(result);
     }
 }
