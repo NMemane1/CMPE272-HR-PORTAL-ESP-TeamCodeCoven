@@ -11,6 +11,7 @@ public class LoginResponseDto {
 
     private Long userId;
     private String name;
+    private String email;
     private String role;
-    private String token;   // placeholder for JWT or session token
+    private String token;   // placeholder
 }
