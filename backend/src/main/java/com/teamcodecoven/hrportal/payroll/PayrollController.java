@@ -4,122 +4,187 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api")
 public class PayrollController {
 
-    // employeeId -> list of payroll records
-    private final Map<Long, List<PayrollRecord>> payrollByEmployee = new ConcurrentHashMap<>();
-    private final AtomicLong payrollIdSeq = new AtomicLong(1L);
+    // In-memory payroll data for demo purposes
+    private static final List<PayrollRecord> PAYROLL_RECORDS = new ArrayList<>();
+    private static final Map<Long, EmployeeMeta> EMPLOYEE_META = new HashMap<>();
+    private static final AtomicLong ID_SEQUENCE = new AtomicLong(100);
 
-    public PayrollController() {
-        // Seed some example payroll for employeeId = 1
-        List<PayrollRecord> emp1 = new ArrayList<>();
-        emp1.add(new PayrollRecord(
-                payrollIdSeq.getAndIncrement(),
+    static {
+        // --- Seed employee meta used for names / departments ---
+        EMPLOYEE_META.put(1L, new EmployeeMeta(1L, "Erin Employee", "Development"));
+        EMPLOYEE_META.put(2L, new EmployeeMeta(2L, "Manny Manager", "Development"));
+        EMPLOYEE_META.put(3L, new EmployeeMeta(3L, "Alex Admin", "HR"));
+
+        // --- Seed some payroll records (months must match frontend e.g. "2025-12") ---
+        PAYROLL_RECORDS.add(new PayrollRecord(
+                ID_SEQUENCE.getAndIncrement(),
+                1L,
+                "2025-12",
+                8000, 500, 200
+        ));
+        PAYROLL_RECORDS.add(new PayrollRecord(
+                ID_SEQUENCE.getAndIncrement(),
                 1L,
                 "2025-11",
-                8000,
-                500,
-                200,
-                8000 + 500 - 200
+                8000, 300, 150
         ));
-        emp1.add(new PayrollRecord(
-                payrollIdSeq.getAndIncrement(),
-                1L,
-                "2025-10",
-                8000,
-                300,
-                150,
-                8000 + 300 - 150
+        PAYROLL_RECORDS.add(new PayrollRecord(
+                ID_SEQUENCE.getAndIncrement(),
+                2L,
+                "2025-12",
+                10000, 800, 300
         ));
-        payrollByEmployee.put(1L, emp1);
     }
 
-    // -------------------------------------------------
-    // 1) Per-employee payroll (used by My Payroll, etc.)
-    // -------------------------------------------------
+    // -----------------------------------------------------------
+    // 1) Employee-level payroll: /api/employees/{id}/payroll
+    //    (used by "My Payroll" for the logged-in employee)
+    // -----------------------------------------------------------
 
     @GetMapping("/employees/{employeeId}/payroll")
-    public ResponseEntity<List<PayrollRecord>> getPayrollForEmployee(
-            @PathVariable Long employeeId
-    ) {
-        List<PayrollRecord> list = payrollByEmployee.get(employeeId);
-        if (list == null) {
-            // 200 with empty list → UI shows "No payroll records"
-            return ResponseEntity.ok(Collections.emptyList());
-        }
-        return ResponseEntity.ok(list);
+    public List<PayrollRecord> getPayrollForEmployee(@PathVariable Long employeeId) {
+        return PAYROLL_RECORDS.stream()
+                .filter(r -> r.getEmployeeId().equals(employeeId))
+                .collect(Collectors.toList());
     }
 
     @PostMapping("/employees/{employeeId}/payroll")
-    public ResponseEntity<PayrollRecord> createPayrollRecord(
+    public PayrollRecord createPayrollForEmployee(
             @PathVariable Long employeeId,
             @RequestBody PayrollRecord payload
     ) {
-        List<PayrollRecord> list = payrollByEmployee
-                .computeIfAbsent(employeeId, id -> new ArrayList<>());
-
-        Long id = payrollIdSeq.getAndIncrement();
-        double baseSalary = payload.getBaseSalary();
-        double bonus = payload.getBonus();
-        double deductions = payload.getDeductions();
-        double netPay = baseSalary + bonus - deductions;
-
+        long newId = ID_SEQUENCE.getAndIncrement();
         PayrollRecord record = new PayrollRecord(
-                id,
+                newId,
                 employeeId,
                 payload.getMonth(),
-                baseSalary,
-                bonus,
-                deductions,
-                netPay
+                payload.getBaseSalary(),
+                payload.getBonus(),
+                payload.getDeductions()
         );
-        list.add(record);
-        return ResponseEntity.ok(record);
+        PAYROLL_RECORDS.add(record);
+        return record;
     }
 
-    // -------------------------------------------------
-    // 2) Global payroll (used by Admin Dashboard & Team Payroll)
-    //    Called as: GET /api/payroll?month=YYYY-MM&department=Dept
-    // -------------------------------------------------
+    // -----------------------------------------------------------
+    // 2) Global payroll: /api/payroll?month=YYYY-MM[&department=...]
+    //    (used by Manager "Team Payroll" and HR "Admin Dashboard")
+    // -----------------------------------------------------------
 
-    @GetMapping("/payroll")
-    public ResponseEntity<List<Map<String, Object>>> getGlobalPayroll(
-            @RequestParam(name = "month", required = false) String month,
-            @RequestParam(name = "department", required = false) String department
-    ) {
-        // For your demo, we keep this very simple:
-        // - Flatten all payroll records
-        // - Optionally filter by month (ignore department for now)
-        // - Return lightweight summary objects that match frontend expectations
+    public static class GlobalPayrollRow {
+        private Long id;
+        private Long employeeId;
+        private String employeeName;
+        private String department;
+        private String month;
+        private double netPay;
 
-        List<Map<String, Object>> result = new ArrayList<>();
-
-        for (List<PayrollRecord> records : payrollByEmployee.values()) {
-            for (PayrollRecord r : records) {
-
-                if (month != null && !month.isBlank() && !month.equals(r.getMonth())) {
-                    continue; // skip different months
-                }
-
-                Map<String, Object> item = new HashMap<>();
-                item.put("id", r.getId());
-                item.put("employeeId", r.getEmployeeId());
-                item.put("employeeName", "Employee " + r.getEmployeeId()); // simple label
-                item.put("department", "Development"); // demo value
-                item.put("month", r.getMonth());
-                item.put("netPay", r.getNetPay());
-
-                result.add(item);
-            }
+        public GlobalPayrollRow() {
         }
 
-        // If there are no matching records, we still return 200 with [].
-        // Frontend will show "No payroll records found for this month" but NO red error.
-        return ResponseEntity.ok(result);
+        // getters / setters
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public Long getEmployeeId() {
+            return employeeId;
+        }
+
+        public void setEmployeeId(Long employeeId) {
+            this.employeeId = employeeId;
+        }
+
+        public String getEmployeeName() {
+            return employeeName;
+        }
+
+        public void setEmployeeName(String employeeName) {
+            this.employeeName = employeeName;
+        }
+
+        public String getDepartment() {
+            return department;
+        }
+
+        public void setDepartment(String department) {
+            this.department = department;
+        }
+
+        public String getMonth() {
+            return month;
+        }
+
+        public void setMonth(String month) {
+            this.month = month;
+        }
+
+        public double getNetPay() {
+            return netPay;
+        }
+
+        public void setNetPay(double netPay) {
+            this.netPay = netPay;
+        }
+    }
+
+    private record EmployeeMeta(Long id, String name, String department) {
+    }
+
+    @GetMapping("/payroll")
+    public ResponseEntity<List<GlobalPayrollRow>> getGlobalPayroll(
+            @RequestParam(required = false) String month,
+            @RequestParam(required = false) String department
+    ) {
+        Stream<PayrollRecord> stream = PAYROLL_RECORDS.stream();
+
+        // Filter by month if provided
+        if (month != null && !month.isBlank()) {
+            stream = stream.filter(r -> month.equals(r.getMonth()));
+        }
+
+        // Filter by department if provided (and not "All")
+        if (department != null
+                && !department.isBlank()
+                && !"All".equalsIgnoreCase(department)) {
+            stream = stream.filter(r -> {
+                EmployeeMeta meta = EMPLOYEE_META.get(r.getEmployeeId());
+                return meta != null
+                        && department.equalsIgnoreCase(meta.department());
+            });
+        }
+
+        List<GlobalPayrollRow> rows = stream
+                .map(r -> {
+                    EmployeeMeta meta = EMPLOYEE_META.get(r.getEmployeeId());
+                    GlobalPayrollRow row = new GlobalPayrollRow();
+                    row.setId(r.getId());
+                    row.setEmployeeId(r.getEmployeeId());
+                    row.setMonth(r.getMonth());
+                    row.setNetPay(r.getNetPay());
+                    if (meta != null) {
+                        row.setEmployeeName(meta.name());
+                        row.setDepartment(meta.department());
+                    } else {
+                        row.setEmployeeName("Unknown");
+                        row.setDepartment("Unknown");
+                    }
+                    return row;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(rows);
     }
 }

@@ -4,7 +4,7 @@ public class PayrollRecord {
 
     private Long id;
     private Long employeeId;
-    private String month;      // e.g. "2025-11"
+    private String month;       // e.g. "2025-12"
     private double baseSalary;
     private double bonus;
     private double deductions;
@@ -18,15 +18,14 @@ public class PayrollRecord {
                          String month,
                          double baseSalary,
                          double bonus,
-                         double deductions,
-                         double netPay) {
+                         double deductions) {
         this.id = id;
         this.employeeId = employeeId;
         this.month = month;
         this.baseSalary = baseSalary;
         this.bonus = bonus;
         this.deductions = deductions;
-        this.netPay = netPay;
+        this.netPay = baseSalary + bonus - deductions;
     }
 
     // --- getters & setters ---
