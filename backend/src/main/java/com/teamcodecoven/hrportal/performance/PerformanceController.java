@@ -1,70 +1,97 @@
 package com.teamcodecoven.hrportal.performance;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
-@RequestMapping("/api/performance")
+@RequestMapping("/api/employees")
 public class PerformanceController {
 
-    // In-memory mock data for demo
-    private final Map<Long, Map<String, Object>> reviews = new HashMap<>();
+    private final Map<Long, List<PerformanceReview>> performanceByEmployee = new ConcurrentHashMap<>();
+    private final AtomicLong perfIdSeq = new AtomicLong(1L);
 
     public PerformanceController() {
-        Map<String, Object> r1 = new HashMap<>();
-        r1.put("id", 1L);
-        r1.put("employeeId", 1L);
-        r1.put("rating", "EXCEEDS_EXPECTATIONS");
-        r1.put("comments", "Great collaborator, strong technical skills");
-        reviews.put(1L, r1);
+        // Seed a couple of reviews for employeeId = 1
+        List<PerformanceReview> emp1 = new ArrayList<>();
+        emp1.add(new PerformanceReview(
+                perfIdSeq.getAndIncrement(),
+                1L,
+                2L, // reviewer: manager
+                "2024-H1",
+                4.5,
+                "Great team player and consistently meets expectations."
+        ));
+        emp1.add(new PerformanceReview(
+                perfIdSeq.getAndIncrement(),
+                1L,
+                2L,
+                "2023-H2",
+                4.2,
+                "Strong performance and good collaboration across teams."
+        ));
+        performanceByEmployee.put(1L, emp1);
     }
 
-    @GetMapping
-    public ResponseEntity<?> getAllReviews() {
-        return ResponseEntity.ok(reviews.values());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getReview(@PathVariable Long id) {
-        Map<String, Object> review = reviews.get(id);
-        if (review == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Performance review not found"));
+    @GetMapping("/{employeeId}/performance")
+    public ResponseEntity<List<PerformanceReview>> getPerformanceReviews(
+            @PathVariable Long employeeId
+    ) {
+        List<PerformanceReview> list = performanceByEmployee.get(employeeId);
+        if (list == null) {
+            return ResponseEntity.ok(Collections.emptyList());
         }
+        return ResponseEntity.ok(list);
+    }
+
+    @PostMapping("/{employeeId}/performance")
+    public ResponseEntity<PerformanceReview> createPerformanceReview(
+            @PathVariable Long employeeId,
+            @RequestBody PerformanceReview payload
+    ) {
+        List<PerformanceReview> list = performanceByEmployee
+                .computeIfAbsent(employeeId, id -> new ArrayList<>());
+
+        Long id = perfIdSeq.getAndIncrement();
+        PerformanceReview review = new PerformanceReview(
+                id,
+                employeeId,
+                payload.getReviewerId(),
+                payload.getPeriod(),
+                payload.getRating(),
+                payload.getComments()
+        );
+        list.add(review);
         return ResponseEntity.ok(review);
     }
 
-    @PostMapping
-    public ResponseEntity<?> createReview(@RequestBody Map<String, Object> body) {
-        long newId = reviews.keySet().stream().mapToLong(Long::longValue).max().orElse(0L) + 1;
-        body.put("id", newId);
-        reviews.put(newId, body);
-        return ResponseEntity.status(HttpStatus.CREATED).body(body);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateReview(@PathVariable Long id,
-                                          @RequestBody Map<String, Object> updates) {
-        Map<String, Object> existing = reviews.get(id);
-        if (existing == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Performance review not found"));
+    @PutMapping("/{employeeId}/performance/{reviewId}")
+    public ResponseEntity<PerformanceReview> updatePerformanceReview(
+            @PathVariable Long employeeId,
+            @PathVariable Long reviewId,
+            @RequestBody PerformanceReview payload
+    ) {
+        List<PerformanceReview> list = performanceByEmployee.get(employeeId);
+        if (list == null) {
+            return ResponseEntity.notFound().build();
         }
-        existing.putAll(updates);
-        existing.put("id", id);
+        Optional<PerformanceReview> existingOpt = list.stream()
+                .filter(r -> Objects.equals(r.getId(), reviewId))
+                .findFirst();
+
+        if (existingOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        PerformanceReview existing = existingOpt.get();
+        if (payload.getPeriod() != null) existing.setPeriod(payload.getPeriod());
+        if (payload.getComments() != null) existing.setComments(payload.getComments());
+        if (payload.getRating() != 0.0) existing.setRating(payload.getRating());
+        if (payload.getReviewerId() != null) existing.setReviewerId(payload.getReviewerId());
+
         return ResponseEntity.ok(existing);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteReview(@PathVariable Long id) {
-        if (!reviews.containsKey(id)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Performance review not found"));
-        }
-        reviews.remove(id);
-        return ResponseEntity.ok(Map.of("message", "Performance review deleted", "id", id));
     }
 }

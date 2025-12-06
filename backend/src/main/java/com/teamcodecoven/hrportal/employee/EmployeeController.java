@@ -1,146 +1,116 @@
 package com.teamcodecoven.hrportal.employee;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
 @RequestMapping("/api/employees")
 public class EmployeeController {
 
-    // Simple in-memory Employee model
-    public static class Employee {
-        public Long id;
-        public String name;
-        public String email;
-        public String department;
-        public String title;
-        public String status;
+    private final Map<Long, Employee> employees = new ConcurrentHashMap<>();
+    private final AtomicLong idSequence = new AtomicLong(1L);
 
-        public Employee(Long id,
-                        String name,
-                        String email,
-                        String department,
-                        String title,
-                        String status) {
-            this.id = id;
-            this.name = name;
-            this.email = email;
-            this.department = department;
-            this.title = title;
-            this.status = status;
-        }
-    }
-
-    // Request DTO (for POST / PUT)
-    public static class EmployeeRequest {
-        public String name;
-        public String email;
-        public String department;
-        public String title;
-        public String status; // optional; default ACTIVE
-    }
-
-    // Mock in-memory list
-    private static final List<Employee> EMPLOYEES = new ArrayList<>();
-
-    static {
-        EMPLOYEES.add(new Employee(
-                1L,
+    public EmployeeController() {
+        // Seed 3 employees matching your auth users
+        Employee emp = new Employee(
+                idSequence.getAndIncrement(),
                 "Erin Employee",
-                "employee@company.com",
+                "employee@test.com",
                 "Development",
                 "Software Engineer",
                 "ACTIVE"
-        ));
-        EMPLOYEES.add(new Employee(
-                2L,
+        );
+        employees.put(emp.getId(), emp);
+
+        Employee manager = new Employee(
+                idSequence.getAndIncrement(),
                 "Manny Manager",
-                "manager@company.com",
+                "manager@test.com",
                 "Development",
                 "Engineering Manager",
                 "ACTIVE"
-        ));
-    }
-
-    // ---------- GET all ----------
-    @GetMapping
-    public List<Employee> getAllEmployees() {
-        return EMPLOYEES;
-    }
-
-    // ---------- GET by id ----------
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getEmployeeById(@PathVariable Long id) {
-        return EMPLOYEES.stream()
-                .filter(e -> e.id.equals(id))
-                .findFirst()
-                .<ResponseEntity<?>>map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "Employee not found")));
-    }
-
-    // ---------- POST (create) ----------
-    @PostMapping
-    public ResponseEntity<Employee> createEmployee(@RequestBody EmployeeRequest req) {
-        long nextId = EMPLOYEES.stream()
-                .mapToLong(e -> e.id)
-                .max()
-                .orElse(0L) + 1;
-
-        Employee e = new Employee(
-                nextId,
-                req.name,
-                req.email,
-                req.department,
-                req.title,
-                req.status != null ? req.status : "ACTIVE"
         );
-        EMPLOYEES.add(e);
-        return ResponseEntity.status(HttpStatus.CREATED).body(e);
+        employees.put(manager.getId(), manager);
+
+        Employee admin = new Employee(
+                idSequence.getAndIncrement(),
+                "Alex Admin",
+                "hradmin@test.com",
+                "HR",
+                "HR Admin",
+                "ACTIVE"
+        );
+        employees.put(admin.getId(), admin);
     }
 
-    // ---------- PUT (update) ----------
+    @GetMapping
+    public Collection<Employee> getAllEmployees() {
+        return employees.values();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Employee> getEmployeeById(@PathVariable Long id) {
+        Employee emp = employees.get(id);
+        if (emp == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(emp);
+    }
+
+    @PostMapping
+    public ResponseEntity<Employee> createEmployee(@RequestBody Employee payload) {
+        Long id = idSequence.getAndIncrement();
+        Employee emp = new Employee(
+                id,
+                payload.getName(),
+                payload.getEmail(),
+                payload.getDepartment(),
+                payload.getTitle(),
+                payload.getStatus() != null ? payload.getStatus() : "ACTIVE"
+        );
+        employees.put(id, emp);
+        return ResponseEntity.ok(emp);
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateEmployee(
+    public ResponseEntity<Employee> updateEmployee(
             @PathVariable Long id,
-            @RequestBody EmployeeRequest req
+            @RequestBody Employee payload
     ) {
-        for (Employee e : EMPLOYEES) {
-            if (e.id.equals(id)) {
-                // Only update fields that are provided (non-null)
-                if (req.name != null) e.name = req.name;
-                if (req.email != null) e.email = req.email;
-                if (req.department != null) e.department = req.department;
-                if (req.title != null) e.title = req.title;
-                if (req.status != null) e.status = req.status;
-
-                return ResponseEntity.ok(e);
-            }
+        Employee existing = employees.get(id);
+        if (existing == null) {
+            return ResponseEntity.notFound().build();
         }
+        if (payload.getName() != null) existing.setName(payload.getName());
+        if (payload.getEmail() != null) existing.setEmail(payload.getEmail());
+        if (payload.getDepartment() != null) existing.setDepartment(payload.getDepartment());
+        if (payload.getTitle() != null) existing.setTitle(payload.getTitle());
+        if (payload.getStatus() != null) existing.setStatus(payload.getStatus());
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", "Employee not found"));
+        return ResponseEntity.ok(existing);
     }
 
-    // ---------- DELETE ----------
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
-        boolean removed = EMPLOYEES.removeIf(e -> e.id.equals(id));
-
-        if (!removed) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Employee not found"));
+    public ResponseEntity<?> deactivateEmployee(@PathVariable Long id) {
+        Employee existing = employees.get(id);
+        if (existing == null) {
+            return ResponseEntity.notFound().build();
         }
+        existing.setStatus("INACTIVE");
+        return ResponseEntity.ok(
+                Map.of("message", "Employee deactivated", "id", id)
+        );
+    }
 
-        // For demo, return a simple JSON instead of empty 204
-        return ResponseEntity.ok(Map.of(
-                "message", "Employee deleted",
-                "id", id
-        ));
+    // Helper for other controllers
+    public List<Employee> getEmployeesList() {
+        return new ArrayList<>(employees.values());
     }
 }

@@ -1,71 +1,79 @@
 package com.teamcodecoven.hrportal.payroll;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
-@RequestMapping("/api/payroll")
+@RequestMapping("/api/employees")
 public class PayrollController {
 
-    // simple in-memory list for demo
-    private final Map<Long, Map<String, Object>> payroll = new HashMap<>();
+    private final Map<Long, List<PayrollRecord>> payrollByEmployee = new ConcurrentHashMap<>();
+    private final AtomicLong payrollIdSeq = new AtomicLong(1L);
 
     public PayrollController() {
-        // Seed one record for testing
-        Map<String, Object> p1 = new HashMap<>();
-        p1.put("id", 1L);
-        p1.put("employeeId", 1L);
-        p1.put("salary", 120000);
-        p1.put("bonus", 5000);
-        payroll.put(1L, p1);
+        // Seed some example payroll for employeeId = 1
+        List<PayrollRecord> emp1 = new ArrayList<>();
+        emp1.add(new PayrollRecord(
+                payrollIdSeq.getAndIncrement(),
+                1L,
+                "2025-11",
+                8000,
+                500,
+                200,
+                8000 + 500 - 200
+        ));
+        emp1.add(new PayrollRecord(
+                payrollIdSeq.getAndIncrement(),
+                1L,
+                "2025-10",
+                8000,
+                300,
+                150,
+                8000 + 300 - 150
+        ));
+        payrollByEmployee.put(1L, emp1);
     }
 
-    @GetMapping
-    public ResponseEntity<?> getAllPayroll() {
-        return ResponseEntity.ok(payroll.values());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getPayrollById(@PathVariable Long id) {
-        Map<String, Object> rec = payroll.get(id);
-        if (rec == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Payroll record not found"));
+    @GetMapping("/{employeeId}/payroll")
+    public ResponseEntity<List<PayrollRecord>> getPayrollForEmployee(
+            @PathVariable Long employeeId
+    ) {
+        List<PayrollRecord> list = payrollByEmployee.get(employeeId);
+        if (list == null) {
+            // Return empty list instead of 404 so UI doesn't scream
+            return ResponseEntity.ok(Collections.emptyList());
         }
-        return ResponseEntity.ok(rec);
+        return ResponseEntity.ok(list);
     }
 
-    @PostMapping
-    public ResponseEntity<?> createPayroll(@RequestBody Map<String, Object> body) {
-        long newId = payroll.keySet().stream().mapToLong(Long::longValue).max().orElse(0L) + 1;
-        body.put("id", newId);
-        payroll.put(newId, body);
-        return ResponseEntity.status(HttpStatus.CREATED).body(body);
-    }
+    @PostMapping("/{employeeId}/payroll")
+    public ResponseEntity<PayrollRecord> createPayrollRecord(
+            @PathVariable Long employeeId,
+            @RequestBody PayrollRecord payload
+    ) {
+        List<PayrollRecord> list = payrollByEmployee
+                .computeIfAbsent(employeeId, id -> new ArrayList<>());
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updatePayroll(@PathVariable Long id,
-                                           @RequestBody Map<String, Object> updates) {
-        Map<String, Object> existing = payroll.get(id);
-        if (existing == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Payroll record not found"));
-        }
-        existing.putAll(updates);
-        existing.put("id", id); // don’t let it change
-        return ResponseEntity.ok(existing);
-    }
+        Long id = payrollIdSeq.getAndIncrement();
+        double baseSalary = payload.getBaseSalary();
+        double bonus = payload.getBonus();
+        double deductions = payload.getDeductions();
+        double netPay = baseSalary + bonus - deductions;
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePayroll(@PathVariable Long id) {
-        if (!payroll.containsKey(id)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Payroll record not found"));
-        }
-        payroll.remove(id);
-        return ResponseEntity.ok(Map.of("message", "Payroll deleted", "id", id));
+        PayrollRecord record = new PayrollRecord(
+                id,
+                employeeId,
+                payload.getMonth(),
+                baseSalary,
+                bonus,
+                deductions,
+                netPay
+        );
+        list.add(record);
+        return ResponseEntity.ok(record);
     }
 }
