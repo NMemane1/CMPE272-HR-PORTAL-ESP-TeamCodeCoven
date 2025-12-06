@@ -1,11 +1,11 @@
 package com.teamcodecoven.hrportal.auth.controller;
 
+import com.teamcodecoven.hrportal.auth.dto.LoginResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
+@CrossOrigin(origins = "http://localhost:5173")   // ✅ allow your Vite dev frontend
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -16,16 +16,18 @@ public class AuthController {
         public String password;
     }
 
-    // Helper to build a standard login success payload
-    private Map<String, Object> buildUserResponse(String email,
-                                                  String name,
-                                                  String role) {
-        return Map.of(
-                "email", email,
-                "name", name,
-                "role", role,
-                "message", "Login successful"
-        );
+    // Helper to build login success payload (with userId + email)
+    private LoginResponseDto buildUserResponse(Long userId,
+                                               String email,
+                                               String name,
+                                               String role) {
+        LoginResponseDto dto = new LoginResponseDto();
+        dto.setUserId(userId);
+        dto.setEmail(email);
+        dto.setName(name);
+        dto.setRole(role);
+        dto.setToken(null);  // placeholder
+        return dto;
     }
 
     @PostMapping("/login")
@@ -33,39 +35,37 @@ public class AuthController {
         String email = request.email;
         String password = request.password;
 
-        // 🔹 Dummy users for RBAC testing (for Shilpa)
         if ("employee@test.com".equals(email) && "password123".equals(password)) {
             return ResponseEntity.ok(
-                    buildUserResponse(email, "Employee User", "EMPLOYEE")
+                    buildUserResponse(1L, email, "Employee User", "EMPLOYEE")
             );
         }
 
         if ("manager@test.com".equals(email) && "password123".equals(password)) {
             return ResponseEntity.ok(
-                    buildUserResponse(email, "Manager User", "MANAGER")
+                    buildUserResponse(2L, email, "Manager User", "MANAGER")
             );
         }
 
         if ("hradmin@test.com".equals(email) && "password123".equals(password)) {
             return ResponseEntity.ok(
-                    buildUserResponse(email, "HR Admin User", "HR_ADMIN")
+                    buildUserResponse(3L, email, "HR Admin User", "HR_ADMIN")
             );
         }
 
-        // ❌ Anything else = invalid credentials
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("message", "Invalid credentials"));
+                .body(java.util.Map.of("message", "Invalid credentials"));
     }
 
-    // Simple "current user" endpoint (still a dummy user)
     @GetMapping("/me")
     public ResponseEntity<?> currentUser() {
-        return ResponseEntity.ok(
-                Map.of(
-                        "email", "employee@test.com",
-                        "name", "Employee User",
-                        "role", "EMPLOYEE"
-                )
-        );
+        LoginResponseDto dto = new LoginResponseDto();
+        dto.setUserId(1L);
+        dto.setEmail("employee@test.com");
+        dto.setName("Employee User");
+        dto.setRole("EMPLOYEE");
+        dto.setToken(null);
+
+        return ResponseEntity.ok(dto);
     }
 }
