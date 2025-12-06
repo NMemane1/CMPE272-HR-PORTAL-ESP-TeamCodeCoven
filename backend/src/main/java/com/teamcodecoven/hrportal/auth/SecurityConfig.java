@@ -23,7 +23,7 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Load users from DB
+    // Load users from DB 
     @Bean
     public UserDetailsService userDetailsService(UserAccountRepository userRepo) {
         return username -> {
@@ -53,18 +53,20 @@ public class SecurityConfig {
         return provider;
     }
 
-    // -------------------------
-    //      CORS FIX SECTION
-    // -------------------------
+    // --------------------------------
+    //          CORS CONFIG
+    // --------------------------------
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow local dev AND EC2 frontend
+        // IMPORTANT — allow your frontend origin
         config.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
-                "http://ec2-54-176-21-21.us-west-1.compute.amazonaws.com"   // <-- required for deployment
+                "http://ec2-54-176-21-21.us-west-1.compute.amazonaws.com"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
@@ -76,30 +78,32 @@ public class SecurityConfig {
         return source;
     }
 
-    // -------------------------
-    //    SECURITY RULES
-    // -------------------------
+    // --------------------------------
+    //       SECURITY RULES
+    // --------------------------------
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))   // enable our CORS bean
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(
-                            "/api/auth/**",
-                            "/api/employees/**",
-                            "/api/payroll/**",
-                            "/api/performance/**",
-                            "/h2-console/**",
-                            "/error"
-                    ).permitAll()
-                    .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                    .loginPage("/login").permitAll()
-            )
-            .logout(logout -> logout.logoutUrl("/logout").permitAll());
 
+        http
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/employees/**",
+                                "/api/payroll/**",
+                                "/api/performance/**",
+                                "/h2-console/**",
+                                "/error"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login").permitAll()
+                )
+                .logout(logout -> logout.logoutUrl("/logout").permitAll());
+
+        // Allow H2 console frames
         http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
         return http.build();
