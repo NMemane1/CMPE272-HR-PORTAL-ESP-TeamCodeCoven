@@ -1,6 +1,6 @@
 # Architecture Diagram – Notes
 
-- Frontend: React (Vite) app
+- Frontend: React app
   - Calls backend using `VITE_API_BASE_URL` (e.g., http://localhost:8080/api in dev)
 
 - Backend: Spring Boot app (branch `feature/auth-stable`)
