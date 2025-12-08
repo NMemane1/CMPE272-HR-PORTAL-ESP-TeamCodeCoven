@@ -1,6 +1,5 @@
 package com.teamcodecoven.hrportal.performance;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,180 +11,112 @@ import java.util.concurrent.atomic.AtomicLong;
 @RequestMapping("/api/employees")
 public class PerformanceController {
 
-    // In-memory store: employeeId -> list of reviews
+    // In-memory performance reviews: keyed by employeeId
     private final Map<Long, List<PerformanceReview>> performanceByEmployee = new ConcurrentHashMap<>();
     private final AtomicLong perfIdSeq = new AtomicLong(1L);
 
-    // Simple in-memory directory of employees + roles
-    // This mirrors the same IDs / roles you already use in auth + payroll:
-    //
-    // 1 -> employee@test.com (EMPLOYEE)
-    // 2 -> manager@test.com  (MANAGER)
-    // 3 -> hradmin@test.com  (HR_ADMIN)
-    // 4,5 -> extra demo employees (no separate login, just for richer UI)
-    private static final Map<Long, EmployeeMeta> EMPLOYEE_META = new HashMap<>();
-
-    static {
-        EMPLOYEE_META.put(1L, new EmployeeMeta(1L, "employee@test.com", "Erin Employee", "EMPLOYEE"));
-        EMPLOYEE_META.put(2L, new EmployeeMeta(2L, "manager@test.com", "Manny Manager", "MANAGER"));
-        EMPLOYEE_META.put(3L, new EmployeeMeta(3L, "hradmin@test.com", "Alex Admin", "HR_ADMIN"));
-        EMPLOYEE_META.put(4L, new EmployeeMeta(4L, "dev1@company.com", "Dana Developer", "EMPLOYEE"));
-        EMPLOYEE_META.put(5L, new EmployeeMeta(5L, "analyst@company.com", "Chris Analyst", "EMPLOYEE"));
-    }
-
     public PerformanceController() {
-        // --- Employee (id = 1) ---
-        List<PerformanceReview> emp1 = new ArrayList<>();
-        emp1.add(new PerformanceReview(
-                perfIdSeq.getAndIncrement(),
-                1L,
-                2L,   // reviewer: manager
-                "2025-Q4",
-                4.5,
-                "Consistently delivers high-quality work and collaborates well with the team."
-        ));
-        emp1.add(new PerformanceReview(
-                perfIdSeq.getAndIncrement(),
-                1L,
-                2L,
-                "2025-Q3",
-                4.2,
-                "Strong performance and successfully onboarded to the HR Portal project."
-        ));
-        performanceByEmployee.put(1L, emp1);
+        // ------------------------------------------------
+        // Employee User (id = 1)
+        // ------------------------------------------------
+        addReview(1L, 2L, "2025-Q4", 4.5,
+                "Consistently delivers high-quality work and meets all project deadlines.");
+        addReview(1L, 2L, "2025-Q3", 4.2,
+                "Solid performance, successfully onboarded to the HR Portal project.");
+        addReview(1L, 2L, "2025-Q2", 4.0,
+                "Adapted to new services and contributed effectively to sprint goals.");
+        addReview(1L, 2L, "2025-Q1", 4.7,
+                "Strong onboarding performance and quick feature development.");
 
-        // --- Manager (id = 2) ---
-        List<PerformanceReview> mgr = new ArrayList<>();
-        mgr.add(new PerformanceReview(
-                perfIdSeq.getAndIncrement(),
-                2L,
-                3L,   // reviewer: HR admin
-                "2025-Q4",
-                4.3,
-                "Effectively leads the team and supports successful delivery of HR features."
-        ));
-        performanceByEmployee.put(2L, mgr);
+        // ------------------------------------------------
+        // Manager User (id = 2)
+        // ------------------------------------------------
+        addReview(2L, 3L, "2025-Q4", 4.0,
+                "Effectively manages the team and supports project delivery.");
+        addReview(2L, 3L, "2025-Q3", 3.8,
+                "Handled team activities well and improved cross-functional communication.");
+        addReview(2L, 3L, "2025-Q2", 3.5,
+                "Some delays in project updates; recommended better time management.");
+        addReview(2L, 3L, "2025-Q1", 4.0,
+                "Stable performance with growing responsibility handling.");
 
-        // --- HR Admin (id = 3) ---
-        List<PerformanceReview> hr = new ArrayList<>();
-        hr.add(new PerformanceReview(
-                perfIdSeq.getAndIncrement(),
-                3L,
-                2L,
-                "2025-Q4",
-                4.7,
-                "Drives security, compliance, and deployment coordination across the platform."
-        ));
-        performanceByEmployee.put(3L, hr);
+        // ------------------------------------------------
+        // HR Admin User (id = 3)
+        // ------------------------------------------------
+        addReview(3L, 2L, "2025-Q4", 4.6,
+                "Drives security, compliance and deployment coordination across the platform.");
+        addReview(3L, 2L, "2025-Q3", 4.4,
+                "Delivered strong architectural support across backend services.");
+        addReview(3L, 2L, "2025-Q2", 4.0,
+                "Consistent delivery but needs to document deployments more clearly.");
+        addReview(3L, 2L, "2025-Q1", 4.5,
+                "Key contributor to backend security workflows.");
 
-        // --- Dana Developer (id = 4) ---
-        List<PerformanceReview> dev = new ArrayList<>();
-        dev.add(new PerformanceReview(
-                perfIdSeq.getAndIncrement(),
-                4L,
-                2L,
-                "2025-Q4",
-                4.1,
-                "Quickly picked up new services and closed several critical tickets."
-        ));
-        performanceByEmployee.put(4L, dev);
+        // ------------------------------------------------
+        // Dev User (id = 4)
+        // ------------------------------------------------
+        addReview(4L, 2L, "2025-Q4", 4.0,
+                "Strong technical delivery and reliable task completion.");
+        addReview(4L, 2L, "2025-Q3", 4.3,
+                "Delivered key backend components ahead of schedule.");
 
-        // --- Chris Analyst (id = 5) ---
-        List<PerformanceReview> analyst = new ArrayList<>();
-        analyst.add(new PerformanceReview(
-                perfIdSeq.getAndIncrement(),
-                5L,
-                2L,
-                "2025-Q4",
-                4.0,
-                "Built clear reports and dashboards that help leadership understand HR metrics."
-        ));
-        performanceByEmployee.put(5L, analyst);
+        // ------------------------------------------------
+        // Analyst User (id = 5)
+        // ------------------------------------------------
+        addReview(5L, 2L, "2025-Q4", 4.0,
+                "Good analytical skills and improved reporting accuracy.");
+        addReview(5L, 2L, "2025-Q3", 3.4,
+                "Should collaborate more closely with engineering teams.");
     }
 
-    private record EmployeeMeta(Long id, String email, String name, String role) {
+    private void addReview(Long employeeId,
+                           Long reviewerId,
+                           String period,
+                           double rating,
+                           String comments) {
+
+        List<PerformanceReview> list = performanceByEmployee
+                .computeIfAbsent(employeeId, id -> new ArrayList<>());
+
+        Long id = perfIdSeq.getAndIncrement();
+        PerformanceReview review = new PerformanceReview(
+                id,
+                employeeId,
+                reviewerId,
+                period,
+                rating,
+                comments
+        );
+        list.add(review);
     }
 
-    // -----------------------------------------------------------
-    // GET: /api/employees/{employeeId}/performance
+    // ------------------------------------------------
+    // GET /api/employees/{employeeId}/performance
+    // Used by:
+    //  - Employee dashboard: "My Performance"
+    //  - Manager HR pages: when clicking into an employee
     //
-    // Optional query params:
-    //   viewerId   - ID of the logged-in user (Long)
-    //   viewerRole - role of logged-in user: EMPLOYEE / MANAGER / HR_ADMIN
-    //
-    // RBAC rules (best-effort, demo-focused):
-    //   - EMPLOYEE: can only view their own reviews
-    //   - MANAGER: cannot view HR admin reviews
-    //   - HR_ADMIN: cannot view other HR admins' reviews (only self)
-    //
-    // If viewerRole is missing, we fall back to the old behavior
-    // and just return the reviews (no blocking).
-    // -----------------------------------------------------------
+    // No backend RBAC here: UI makes sure only allowed
+    // employees are clickable for each role.
+    // ------------------------------------------------
     @GetMapping("/{employeeId}/performance")
-    public ResponseEntity<?> getPerformanceReviews(
-            @PathVariable Long employeeId,
-            @RequestParam(value = "viewerId", required = false) Long viewerId,
-            @RequestParam(value = "viewerRole", required = false) String viewerRole
+    public ResponseEntity<List<PerformanceReview>> getPerformanceReviews(
+            @PathVariable Long employeeId
     ) {
-        EmployeeMeta target = EMPLOYEE_META.get(employeeId);
-        if (target == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Employee not found."));
-        }
-
-        // If caller passes viewerRole, enforce basic RBAC
-        if (viewerRole != null && !viewerRole.isBlank()) {
-            String normalizedRole = viewerRole.toUpperCase(Locale.ROOT);
-
-            // EMPLOYEE: only own reviews
-            if ("EMPLOYEE".equals(normalizedRole)) {
-                if (viewerId == null || !viewerId.equals(employeeId)) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of(
-                                    "message",
-                                    "You are not allowed to view this employee's performance reviews."
-                            ));
-                }
-            }
-
-            // MANAGER: cannot see any HR admin reviews
-            if ("MANAGER".equals(normalizedRole)) {
-                if ("HR_ADMIN".equalsIgnoreCase(target.role())) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of(
-                                    "message",
-                                    "You are not allowed to view this employee's performance reviews."
-                            ));
-                }
-            }
-
-            // HR_ADMIN: cannot see other HR admins' reviews (only self)
-            if ("HR_ADMIN".equals(normalizedRole)) {
-                if ("HR_ADMIN".equalsIgnoreCase(target.role())
-                        && viewerId != null
-                        && !viewerId.equals(employeeId)) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of(
-                                    "message",
-                                    "You are not allowed to view this employee's performance reviews."
-                            ));
-                }
-            }
-        }
-
         List<PerformanceReview> list = performanceByEmployee.get(employeeId);
         if (list == null) {
             return ResponseEntity.ok(Collections.emptyList());
         }
+        // latest period first (lexicographically works for '2025-Q4', '2025-Q3', ...)
+        list.sort(Comparator.comparing(PerformanceReview::getPeriod).reversed());
         return ResponseEntity.ok(list);
     }
 
-    // -----------------------------------------------------------
-    // POST: /api/employees/{employeeId}/performance
-    //
-    // For the demo, we allow creation from whoever calls it.
-    // (You are not using this from the UI right now.)
-    // -----------------------------------------------------------
+    // ------------------------------------------------
+    // POST /api/employees/{employeeId}/performance
+    // Simple demo endpoint if you want to add reviews
+    // at runtime from Postman.
+    // ------------------------------------------------
     @PostMapping("/{employeeId}/performance")
     public ResponseEntity<PerformanceReview> createPerformanceReview(
             @PathVariable Long employeeId,
@@ -207,11 +138,9 @@ public class PerformanceController {
         return ResponseEntity.ok(review);
     }
 
-    // -----------------------------------------------------------
-    // PUT: /api/employees/{employeeId}/performance/{reviewId}
-    //
-    // For now, we keep this simple as well.
-    // -----------------------------------------------------------
+    // ------------------------------------------------
+    // PUT /api/employees/{employeeId}/performance/{reviewId}
+    // ------------------------------------------------
     @PutMapping("/{employeeId}/performance/{reviewId}")
     public ResponseEntity<PerformanceReview> updatePerformanceReview(
             @PathVariable Long employeeId,
