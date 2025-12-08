@@ -3,6 +3,17 @@
 const API_BASE_URL = "http://ec2-54-176-21-21.us-west-1.compute.amazonaws.com:8080";
 console.log("API_BASE_URL:", API_BASE_URL);
 
+// Helper to get auth headers with role
+function authHeaders() {
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+
+  return {
+    Authorization: token ? `Bearer ${token}` : "",
+    "X-User-Role": role || "EMPLOYEE",
+  };
+}
+
 // ------------------------
 // Low-level HTTP helpers
 // ------------------------
@@ -11,6 +22,7 @@ async function apiRequest(path, options = {}) {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders(),             // <-- NEW (adds token + role)
       ...(options.headers || {}),
     },
     ...options,
@@ -107,7 +119,7 @@ export function getPerformanceReviews(employeeId) {
 }
 
 export function createPerformanceReview(employeeId, payload) {
-  return apiPost(`/api/employees/${employeeId}/performance`);
+  return apiPost(`/api/employees/${employeeId}/performance`, payload);
 }
 
 export function updatePerformanceReview(employeeId, reviewId, payload) {
