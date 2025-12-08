@@ -91,5 +91,4 @@ Functional tests demonstrate reliability across all major backend modules.
 •	Postman Collection: HR Portal APIs
 •	Test user credentials provided during development
 
-<img width="468" height="630" alt="image" src="https://github.com/user-attachments/assets/cc7d2d5b-04b6-44c5-a69e-030d0712cc96" />
 
