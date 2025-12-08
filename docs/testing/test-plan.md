@@ -1,126 +1,95 @@
 # CMPE 272 – HR Portal  
-## Test Plan – Shilpa
+## Test Plan 
 
-### 1. Objective
-The objective of this test plan is to define the strategy, scope, approach, and responsibilities for testing the HR Portal application.  
-Testing covers both backend and frontend functionality, with a strong emphasis on:
+1. **Objective**
+The objective of this test plan is to define the strategy, scope, and methodology for validating the HR Portal backend and UI components.
+Testing focuses on:
+•	Authentication (/api/auth/login, /api/auth/me)
+•	Role identification for EMPLOYEE, MANAGER, HR_ADMIN
+•	CRUD operations for Employees, Payroll, Performance
+•	Error handling and validation behavior
+•	Postman-based automated testing
+The goal is to ensure the HR Portal APIs are reliable, accurate, and ready for frontend integration.
+ 
+2. **Scope**
+In Scope
+•	API testing using Postman
+•	Authentication & session validation
+•	CRUD testing for Employee, Payroll, Performance modules
+•	Error-handling verification (400, 401, 404 scenarios)
+•	Basic UI smoke testing once frontend connects
+Out of Scope
+•	Load/Performance testing
+•	Automated UI testing (e.g., Selenium, Cypress)
+•	Production security penetration testing
+•	Large-scale integration tests
+ 
+3.** Test Types**
+•	Functional API Tests
+Validate REST API correctness for all CRUD modules.
+•	Authentication Tests
+Successful login, invalid login, and /auth/me identity checks.
+•	Role-Based Behavior Tests
+Ensure systems identify Employee, Manager, and Admin roles correctly.
+•	Error-Handling Tests
+Validate server responses for invalid payloads and missing/incorrect IDs.
+•	Regression Tests
+Re-run essential tests after backend fixes or feature updates.
+ 
+4. **Environments**
+Local Development Environment
+•	Backend URL: http://localhost:8080
+•	Base API path: /api
+•	Database auto-seeded with default users:
+o	employee@test.com / password123
+o	manager@test.com / password123
+o	hradmin@test.com / password123
+o	Admin seed: nikita.memane@sjsu.edu / nrm123
+Staging / AWS Environment (TBD)
+To be updated when deployment is finalized.
+ 
+5. **Tools**
+•	Postman – API testing, automation scripts
+•	Browser – UI-level smoke testing
+•	draw.io / diagrams.net – Architecture & sequence diagrams
+•	GitHub – Documentation, test case tracking
+ 
+6. **Entry / Exit Criteria**
+**Entry Criteria**
+•	Backend is running locally (./mvnw spring-boot:run).
+•	Valid test credentials available.
+•	Postman collection configured.
+**Exit Criteria**
+•	All high-priority functional test cases executed.
+•	All CRUD modules validated with successful responses.
+•	Authentication & identity behavior verified.
+•	Test results documented in test-cases.md.
+•	Screenshots captured for representative test evidence.
+ 
+7. **Risks / Assumptions**
+•	Frontend integration may depend on timing of UI availability.
+•	Test data (IDs for employees, payroll records, etc.) must exist for dependent tests.
+•	Changes to backend endpoints may require re-testing.
+ 
+8. **Current Test Execution Status (as of December 7, 2025)**
+Backend Status
+•	Backend branch tested: feature/auth-stable
+•	Application boots successfully on port 8080
+•	Default admin and test users created at startup
+**Test Execution Summary**
+•	Authentication Tests: PASS
+•	Employees CRUD: PASS
+•	Payroll Module: PASS
+•	Performance Module: PASS
+•	Error Handling Tests: PASS
+•	Screenshots of successful operations have been captured for the final report.
+Functional tests demonstrate reliability across all major backend modules.
+ 
+9. **References**
+•	API specifications & RBAC details shared by backend developer
+•	GitHub repository: CMPE272-HR-PORTAL-ESP-TeamCodeCoven
+•	Postman Collection: HR Portal APIs
+•	Test user credentials provided during development
 
-- Authentication (`/api/auth/login` and `/api/auth/me`)
-- Role-Based Access Control (EMPLOYEE, MANAGER, HR_ADMIN)
-- Employee management APIs
-- Payroll APIs
-- Performance review APIs
-- Error handling and security behavior
+<img width="468" height="630" alt="image" src="https://github.com/user-attachments/assets/cc7d2d5b-04b6-44c5-a69e-030d0712cc96" />
 
-The tester will validate functionality, verify access control enforcement, and document defects or incomplete features.
-
----
-
-### 2. Scope
-
-#### **In Scope**
-- API testing using Postman  
-- Authentication testing (custom login endpoint)  
-- RBAC testing across all roles  
-- CRUD operations for Employee, Payroll, Performance entities  
-- Basic UI navigation testing (once frontend connects to backend)  
-- Error-handling verification using Spring Boot's common error format  
-
-#### **Out of Scope**
-- Performance/load testing  
-- Automated frontend testing (e.g., Cypress)  
-- Full penetration/security audit  
-- Production-scale integration testing  
-
----
-
-### 3. Test Types
-
-- **Functional API Tests:**  
-  Validate that all endpoints behave as expected with correct inputs and payloads.
-
-- **RBAC / Security Tests:**  
-  Ensure EMPLOYEE, MANAGER, HR_ADMIN each have the correct allowed/blocked API behavior.
-
-- **UI Flow Tests:**  
-  Validate navigation and visible features based on role (once frontend integrates with backend).
-
-- **Regression Tests:**  
-  Re-run all critical test cases after major backend changes or fixes.
-
----
-
-### 4. Environments
-
-#### **Local Development Environment**
-- Backend: `http://localhost:8080` (Spring Boot, branch: `feature/auth-stable`)  
-- Base API path: `/api`  
-- Database: auto-initialized with default admin user  
-  - Email: `nikita.memane@sjsu.edu`  
-  - Password: `nrm123`
-
-#### **Staging/AWS Environment (TBD)**
-- URL and environment details will be updated once deployed.
-
----
-
-### 5. Tools
-
-- **Postman** → API validation, RBAC checks  
-- **Browser** → UI-level tests (once connected)  
-- **draw.io / diagrams.net** → Architecture + sequence diagrams  
-- **GitHub** → Documentation, issue tracking, test artifacts  
-
----
-
-### 6. Entry / Exit Criteria
-
-#### **Entry Criteria**
-- Backend is running locally (`./mvnw spring-boot:run`).  
-- Test user credentials are available (admin created at startup).  
-- Tester has access to the correct backend branch (`feature/auth-stable`).  
-
-#### **Exit Criteria**
-- All **High** priority test cases are executed.  
-- All **Critical** defects fixed OR documented as known issues.  
-- RBAC behavior validated across all roles.  
-- Test results documented in `test-cases.md`.
-
----
-
-### 7. Risks / Assumptions
-
-- **Custom login endpoint `/api/auth/login` currently returns `403 Forbidden`**  
-  Spring Security default form login works, but the JSON-based login for APIs is not yet fully wired.  
-  This blocks further auth-dependent tests (e.g., `/auth/me`, Employee APIs, Payroll APIs).
-
-- Backend implementation for authentication is still in progress on branch `feature/auth-stable`.
-
-- Frontend integration testing will begin **after** backend auth is functional.
-
-- Test execution is dependent on backend stability and endpoint correctness.
-
----
-
-### 8. Current Test Execution Status (as of December 3, 2025)
-
-- Backend branch tested: **`feature/auth-stable`**  
-- Application boots successfully on port 8080  
-- Default admin user created at startup  
-  (`nikita.memane@sjsu.edu / nrm123`)
-
-#### Current Results:
-- **TC-A01 (Login Success): FAIL – 403 Forbidden**  
-- All additional auth-dependent test cases → **BLOCKED**  
-- RBAC matrix drafted and ready for validation  
-- Test cases drafted for all modules (Employees, Payroll, Performance)
-
-Execution will resume once the authentication endpoint is fixed.
-
----
-
-### 9. References
-- API list & RBAC rules shared by Nikita  
-- Repository: CMPE272-HR-PORTAL-ESP-TeamCodeCoven  
-- Backend branch under test: `feature/auth-stable`  
-- Postman Collection: *HR Portal APIs*
