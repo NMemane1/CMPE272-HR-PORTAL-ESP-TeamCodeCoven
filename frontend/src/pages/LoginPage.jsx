@@ -29,15 +29,6 @@ export default function LoginPage() {
     }
   }
 
-  async function quickLogin(emailValue) {
-    setError("");
-    try {
-      await login({ email: emailValue, password: "password" });
-    } catch (err) {
-      setError(err.message || "Login failed");
-    }
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-slate-100">
       <TopNav />
@@ -72,8 +63,7 @@ export default function LoginPage() {
                     Welcome to the HR Portal!
                   </h1>
                   <p className="mt-2 text-sm text-gray-500">
-                    Use your company email and password. In mock mode, you can
-                    also use the quick login buttons below.
+                    Use your company email and password to sign in.
                   </p>
                 </header>
 
@@ -112,35 +102,6 @@ export default function LoginPage() {
                     Sign In
                   </button>
                 </form>
-
-                <div className="mt-6 text-xs text-gray-500">
-                  <p className="font-semibold mb-2">
-                    Quick logins for demo (mock mode):
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => quickLogin("employee@company.com")}
-                      className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs hover:bg-slate-50"
-                    >
-                      Employee
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => quickLogin("manager@company.com")}
-                      className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs hover:bg-slate-50"
-                    >
-                      Manager
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => quickLogin("admin@company.com")}
-                      className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs hover:bg-slate-50"
-                    >
-                      Admin
-                    </button>
-                  </div>
-                </div>
               </div>
 
               {/* RIGHT: info panel */}
@@ -155,6 +116,7 @@ export default function LoginPage() {
                   <li>• Managers and admins can manage employees centrally</li>
                 </ul>
               </div>
+
             </div>
           </div>
         </div>
@@ -162,4 +124,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

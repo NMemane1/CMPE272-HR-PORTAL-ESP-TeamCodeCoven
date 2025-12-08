@@ -39,8 +39,8 @@ cp .env.example .env
 
 Now open .env in your editor and make sure it has something like this for mock-based dev setup. Set VITE_USE_MOCK=false in your .env to run against a real backend:
 ```
-VITE_API_BASE_URL=http://localhost:8080
-VITE_USE_MOCK=true
+VITE_API_BASE_URL=http://ec2-54-215-175-62.us-west-1.compute.amazonaws.com:8080/api
+VITE_USE_MOCK=false
 ```
 Now run
 ```
@@ -53,7 +53,7 @@ cp .env.production.example .env.production
 ```
 Then edit .env.production so it points to your real backend:
 ```
-VITE_API_BASE_URL=http://<your-backend-host>:8080
+VITE_API_BASE_URL=http://ec2-54-215-175-62.us-west-1.compute.amazonaws.com:8080/api
 VITE_USE_MOCK=false
 ```
 
