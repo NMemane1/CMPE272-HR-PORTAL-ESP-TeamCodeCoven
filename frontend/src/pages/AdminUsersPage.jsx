@@ -106,47 +106,47 @@ export default function AdminUsersPage() {
     setSaving(true);
     setError("");
     try {
-        await createEmployee(formValues); 
+      await createEmployee(formValues);
 
-        const data = await getEmployees();
-        setEmployees(data);
+      const data = await getEmployees();
+      setEmployees(data);
 
-        closeModals();
+      closeModals();
     } catch (err) {
-        console.error("Failed to create employee", err);
-        setError(err.message || "Failed to create employee");
+      console.error("Failed to create employee", err);
+      setError(err.message || "Failed to create employee");
     } finally {
-        setSaving(false);
+      setSaving(false);
     }
   }
 
   async function handleUpdate(e) {
-      e.preventDefault();
+    e.preventDefault();
     if (!editingId) return;
     setSaving(true);
     setError("");
 
     try {
-        await updateEmployee(editingId, formValues);  
-        const data = await getEmployees();           
-        setEmployees(data);
-        closeModals();
+      await updateEmployee(editingId, formValues);
+      const data = await getEmployees();
+      setEmployees(data);
+      closeModals();
     } catch (err) {
-        setError(err.message || "Failed to update employee");
+      setError(err.message || "Failed to update employee");
     } finally {
-        setSaving(false);
+      setSaving(false);
     }
   }
 
   async function handleDeactivate(id) {
-     if (!window.confirm("Deactivate this employee?")) return;
+    if (!window.confirm("Deactivate this employee?")) return;
 
     try {
-        await deactivateEmployee(id);       
-        const data = await getEmployees();  
-        setEmployees(data);
+      await deactivateEmployee(id);
+      const data = await getEmployees();
+      setEmployees(data);
     } catch (err) {
-        setError(err.message || "Failed to deactivate employee");
+      setError(err.message || "Failed to deactivate employee");
     }
   }
 
@@ -154,13 +154,18 @@ export default function AdminUsersPage() {
     return <div className="p-6">Loading employees...</div>;
   }
 
+  const visibleEmployees =
+    user?.role === "MANAGER"
+      ? employees.filter((emp) => emp.role !== "HR_ADMIN")
+      : employees;
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Manage Employees</h1>
           <p className="text-sm text-gray-500">
-            View and manage employee records. 
+            View and manage employee records.
           </p>
         </div>
 
@@ -183,7 +188,7 @@ export default function AdminUsersPage() {
       {/* Employees table */}
       <section className="bg-white rounded-xl shadow p-4">
         <h2 className="text-lg font-semibold mb-2">Employees</h2>
-        {employees.length === 0 ? (
+        {visibleEmployees.length === 0 ? (
           <p className="text-sm text-gray-500">No employees found.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -200,7 +205,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {employees.map((emp) => (
+                {visibleEmployees.map((emp) => (
                   <tr key={emp.id} className="border-b last:border-b-0">
                     <td className="py-2 pr-4">{emp.id}</td>
                     <td className="py-2 pr-4">{emp.name}</td>

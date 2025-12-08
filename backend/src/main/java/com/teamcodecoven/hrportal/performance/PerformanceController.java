@@ -44,29 +44,14 @@ public class PerformanceController {
         // HR Admin User (id = 3)
         // ------------------------------------------------
         addReview(3L, 2L, "2025-Q4", 4.6,
-                "Drives security, compliance and deployment coordination across the platform.");
-        addReview(3L, 2L, "2025-Q3", 4.4,
-                "Delivered strong architectural support across backend services.");
+                "Leads organization-wide HR strategy, including policy updates, compliance reviews, and leadership calibration cycles.");
+        addReview(3L, 2L, "2025-Q3", 4.2,
+                "Successfully closed multiple hiring loops and improved new-hire onboarding experience across teams.");
         addReview(3L, 2L, "2025-Q2", 4.0,
-                "Consistent delivery but needs to document deployments more clearly.");
+                "Handled benefits refresh, manager trainings, and performance calibration with solid stakeholder communication.");
         addReview(3L, 2L, "2025-Q1", 4.5,
-                "Key contributor to backend security workflows.");
+                "Built the initial HR portal rollout plan and drove adoption with managers and employees.");
 
-        // ------------------------------------------------
-        // Dev User (id = 4)
-        // ------------------------------------------------
-        addReview(4L, 2L, "2025-Q4", 4.0,
-                "Strong technical delivery and reliable task completion.");
-        addReview(4L, 2L, "2025-Q3", 4.3,
-                "Delivered key backend components ahead of schedule.");
-
-        // ------------------------------------------------
-        // Analyst User (id = 5)
-        // ------------------------------------------------
-        addReview(5L, 2L, "2025-Q4", 4.0,
-                "Good analytical skills and improved reporting accuracy.");
-        addReview(5L, 2L, "2025-Q3", 3.4,
-                "Should collaborate more closely with engineering teams.");
     }
 
     private void addReview(Long employeeId,
@@ -93,11 +78,10 @@ public class PerformanceController {
     // ------------------------------------------------
     // GET /api/employees/{employeeId}/performance
     // Used by:
-    //  - Employee dashboard: "My Performance"
-    //  - Manager HR pages: when clicking into an employee
+    //  - "My Performance" pages
+    //  - Manager/HR drill-downs
     //
-    // No backend RBAC here: UI makes sure only allowed
-    // employees are clickable for each role.
+    // No backend RBAC here – UI RBAC present.
     // ------------------------------------------------
     @GetMapping("/{employeeId}/performance")
     public ResponseEntity<List<PerformanceReview>> getPerformanceReviews(
@@ -107,16 +91,11 @@ public class PerformanceController {
         if (list == null) {
             return ResponseEntity.ok(Collections.emptyList());
         }
-        // latest period first (lexicographically works for '2025-Q4', '2025-Q3', ...)
+        // Sort latest period first (e.g. 2025-Q4, 2025-Q3, ...)
         list.sort(Comparator.comparing(PerformanceReview::getPeriod).reversed());
         return ResponseEntity.ok(list);
     }
 
-    // ------------------------------------------------
-    // POST /api/employees/{employeeId}/performance
-    // Simple demo endpoint if you want to add reviews
-    // at runtime from Postman.
-    // ------------------------------------------------
     @PostMapping("/{employeeId}/performance")
     public ResponseEntity<PerformanceReview> createPerformanceReview(
             @PathVariable Long employeeId,
@@ -138,9 +117,6 @@ public class PerformanceController {
         return ResponseEntity.ok(review);
     }
 
-    // ------------------------------------------------
-    // PUT /api/employees/{employeeId}/performance/{reviewId}
-    // ------------------------------------------------
     @PutMapping("/{employeeId}/performance/{reviewId}")
     public ResponseEntity<PerformanceReview> updatePerformanceReview(
             @PathVariable Long employeeId,

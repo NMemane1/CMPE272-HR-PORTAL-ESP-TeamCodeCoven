@@ -29,6 +29,7 @@ export default function AdminDashboard() {
       </div>
     );
   }
+
   // Load employees (for counts + departments)
   useEffect(() => {
     async function loadEmployees() {
@@ -166,7 +167,7 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      {/* Global payroll table */}
+      {/* Global payroll summary */}
       <section className="bg-white rounded-xl shadow p-4">
         <h2 className="text-lg font-semibold mb-2">
           Global Payroll – {selectedMonth}
@@ -185,39 +186,26 @@ export default function AdminDashboard() {
             No payroll records found for this month.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="border-b text-gray-500">
-                <tr className="text-left">
-                  <th className="py-2 pr-4">Employee</th>
-                  <th className="py-2 pr-4">Department</th>
-                  <th className="py-2 pr-4">Net Pay</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payroll.map((p) => (
-                  <tr key={p.id} className="border-b last:border-b-0">
-                    <td className="py-2 pr-4">
-                      {p.employeeName || `Employee #${p.employeeId}`}
-                    </td>
-                    <td className="py-2 pr-4">{p.department || "—"}</td>
-                    <td className="py-2 pr-4">
-                      ${p.netPay.toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {!payrollLoading && payroll.length > 0 && (
-          <p className="mt-3 text-xs text-gray-500">
-            Average net pay for this month:{" "}
-            <span className="font-medium">
-              ${avgNetPay.toLocaleString()}
-            </span>
-          </p>
+          <>
+            <p className="text-sm text-gray-600">
+              Total net pay for this month:{" "}
+              <span className="font-medium">
+                ${totalNetPay.toLocaleString()}
+              </span>
+            </p>
+            <p className="text-sm text-gray-600 mt-1">
+              Average net pay across{" "}
+              <span className="font-medium">{payroll.length}</span>{" "}
+              employees with payroll data:{" "}
+              <span className="font-medium">
+                ${avgNetPay.toLocaleString()}
+              </span>
+            </p>
+            <p className="mt-3 text-xs text-gray-500">
+              For detailed employee-level payroll records, use the{" "}
+              <strong>Payroll</strong> section in the navigation.
+            </p>
+          </>
         )}
       </section>
     </div>

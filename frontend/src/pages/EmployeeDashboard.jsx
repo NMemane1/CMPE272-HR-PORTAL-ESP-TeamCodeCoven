@@ -14,7 +14,6 @@ export default function EmployeeDashboard() {
 
   const [loading, setLoading] = useState(true);
 
-  // Separate error messages so we can show partial data
   const [employeeError, setEmployeeError] = useState("");
   const [payrollError, setPayrollError] = useState("");
   const [fatalError, setFatalError] = useState("");
@@ -31,7 +30,7 @@ export default function EmployeeDashboard() {
       let emp = null;
       let pay = [];
 
-      // 1) Load employee profile (if endpoint supports it)
+      // 1) Load employee profile 
       try {
         emp = await getEmployeeById(user.userId);
         setEmployee(emp);
@@ -70,7 +69,6 @@ export default function EmployeeDashboard() {
         setPayroll([]);
       }
 
-      // Optional: if both failed very badly you can set a fatal error
       if (!emp && payrollError && employeeError) {
         setFatalError(
           "We could not load any data for this dashboard. Please contact the administrator."
@@ -121,7 +119,6 @@ export default function EmployeeDashboard() {
 
   const latest = sortedPayroll[0];
   const latestNetPay = latest?.netPay;
-
   const payrollCount = sortedPayroll.length;
 
   const latestNetPayText = latestNetPay
@@ -156,7 +153,7 @@ export default function EmployeeDashboard() {
         <StatCard label="Latest Net Pay" value={latestNetPayText} />
       </section>
 
-      {/* Payroll summary */}
+      {/* Payroll summary (no full table to avoid duplication with Payroll tab) */}
       <section className="bg-white rounded-xl shadow p-4">
         <h2 className="text-lg font-semibold mb-2">Payroll Summary</h2>
         {payrollCount === 0 ? (
@@ -165,42 +162,14 @@ export default function EmployeeDashboard() {
           </p>
         ) : (
           <>
-            <p className="text-sm text-gray-600 mb-3">
-              Showing {payrollCount} payroll record
-              {payrollCount > 1 ? "s" : ""} for you.
+            <p className="text-sm text-gray-600">
+              Latest net pay:{" "}
+              <span className="font-medium">{latestNetPayText}</span>
             </p>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="border-b text-gray-500">
-                  <tr className="text-left">
-                    <th className="py-2 pr-4">Month</th>
-                    <th className="py-2 pr-4">Base Salary</th>
-                    <th className="py-2 pr-4">Bonus</th>
-                    <th className="py-2 pr-4">Deductions</th>
-                    <th className="py-2 pr-4">Net Pay</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedPayroll.map((r) => (
-                    <tr key={r.id} className="border-b last:border-b-0">
-                      <td className="py-2 pr-4">{r.month}</td>
-                      <td className="py-2 pr-4">
-                        ${r.baseSalary?.toLocaleString?.() ?? r.baseSalary}
-                      </td>
-                      <td className="py-2 pr-4">
-                        ${(r.bonus || 0).toLocaleString()}
-                      </td>
-                      <td className="py-2 pr-4">
-                        ${(r.deductions || 0).toLocaleString()}
-                      </td>
-                      <td className="py-2 pr-4 font-medium">
-                        ${r.netPay?.toLocaleString?.() ?? r.netPay}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              For full payroll history and breakdown, use the{" "}
+              <strong>Payroll</strong> tab in the navigation.
+            </p>
           </>
         )}
       </section>
