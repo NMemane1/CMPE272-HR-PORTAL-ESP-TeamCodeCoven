@@ -97,7 +97,7 @@ export default function EmployeeDashboard() {
     );
   }
 
-  // ----- Derive values from employee + payroll -----
+  // Derive values from employee + payroll
 
   const title =
     employee?.title ||

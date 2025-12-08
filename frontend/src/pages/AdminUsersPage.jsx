@@ -67,6 +67,13 @@ export default function AdminUsersPage() {
     load();
   }, []);
 
+  const isManager = user?.role === "MANAGER";
+
+  // Managers should NOT see the HR Admin row (hradmin@test.com)
+  const visibleEmployees = isManager
+    ? employees.filter((emp) => emp.email !== "hradmin@test.com")
+    : employees;
+
   function openCreate() {
     setFormValues(emptyForm());
     setEditingId(null);
@@ -138,7 +145,7 @@ export default function AdminUsersPage() {
     }
   }
 
-  async function handleDeactivate(id) {
+  async function handleDeactivate(id, email) {
     if (!window.confirm("Deactivate this employee?")) return;
 
     try {
@@ -153,11 +160,6 @@ export default function AdminUsersPage() {
   if (loading) {
     return <div className="p-6">Loading employees...</div>;
   }
-
-  const visibleEmployees =
-    user?.role === "MANAGER"
-      ? employees.filter((emp) => emp.role !== "HR_ADMIN")
-      : employees;
 
   return (
     <div className="space-y-6">
@@ -232,14 +234,16 @@ export default function AdminUsersPage() {
                           Edit
                         </button>
                       )}
-                      {canDeleteEmployee(user) && emp.status === "ACTIVE" && (
-                        <button
-                          onClick={() => handleDeactivate(emp.id)}
-                          className="text-red-600 hover:underline"
-                        >
-                          Deactivate
-                        </button>
-                      )}
+                      {canDeleteEmployee(user) &&
+                        emp.status === "ACTIVE" &&
+                        emp.email !== user.email && (
+                          <button
+                            onClick={() => handleDeactivate(emp.id, emp.email)}
+                            className="text-red-600 hover:underline"
+                          >
+                            Deactivate
+                          </button>
+                        )}
                     </td>
                   </tr>
                 ))}

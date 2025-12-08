@@ -16,42 +16,42 @@ public class PerformanceController {
     private final AtomicLong perfIdSeq = new AtomicLong(1L);
 
     public PerformanceController() {
+
         // ------------------------------------------------
-        // Employee User (id = 1)
+        // Employee User (id = 1) – ENGINEERING EMPLOYEE
         // ------------------------------------------------
         addReview(1L, 2L, "2025-Q4", 4.5,
-                "Consistently delivers high-quality work and meets all project deadlines.");
+            "Consistently delivers high-quality features and collaborates effectively with teammates.");
         addReview(1L, 2L, "2025-Q3", 4.2,
-                "Solid performance, successfully onboarded to the HR Portal project.");
+            "Strong sprint execution and improved ownership of end-to-end tasks.");
         addReview(1L, 2L, "2025-Q2", 4.0,
-                "Adapted to new services and contributed effectively to sprint goals.");
+            "Meets expectations across delivery, documentation and testing.");
         addReview(1L, 2L, "2025-Q1", 4.7,
-                "Strong onboarding performance and quick feature development.");
+            "Excellent onboarding performance, quickly productive in new services.");
 
         // ------------------------------------------------
-        // Manager User (id = 2)
+        // Manager User (id = 2) – ENGINEERING MANAGER
         // ------------------------------------------------
         addReview(2L, 3L, "2025-Q4", 4.0,
-                "Effectively manages the team and supports project delivery.");
+            "Proactively supports team execution and ensures successful delivery cycles.");
         addReview(2L, 3L, "2025-Q3", 3.8,
-                "Handled team activities well and improved cross-functional communication.");
+            "Strengthened cross-functional collaboration and improved project visibility.");
         addReview(2L, 3L, "2025-Q2", 3.5,
-                "Some delays in project updates; recommended better time management.");
+            "Encouraged to improve planning accuracy and dependency management.");
         addReview(2L, 3L, "2025-Q1", 4.0,
-                "Stable performance with growing responsibility handling.");
+            "Stable performance with emphasis on team support and clarity of execution.");
 
         // ------------------------------------------------
-        // HR Admin User (id = 3)
+        // HR Admin User (id = 3) – CLEAN HR-FOCUSED REVIEWS
         // ------------------------------------------------
         addReview(3L, 2L, "2025-Q4", 4.6,
-                "Leads organization-wide HR strategy, including policy updates, compliance reviews, and leadership calibration cycles.");
+            "Leads organization-wide HR strategy including policy updates, compliance reviews, and leadership calibration cycles.");
         addReview(3L, 2L, "2025-Q3", 4.2,
-                "Successfully closed multiple hiring loops and improved new-hire onboarding experience across teams.");
+            "Successfully closed multiple hiring loops and improved onboarding experience for new hires.");
         addReview(3L, 2L, "2025-Q2", 4.0,
-                "Handled benefits refresh, manager trainings, and performance calibration with solid stakeholder communication.");
+            "Handled benefits refresh, manager training, and cross-team communication effectively.");
         addReview(3L, 2L, "2025-Q1", 4.5,
-                "Built the initial HR portal rollout plan and drove adoption with managers and employees.");
-
+            "Built and led HR portal rollout plan with strong adoption results.");
     }
 
     private void addReview(Long employeeId,
@@ -77,11 +77,6 @@ public class PerformanceController {
 
     // ------------------------------------------------
     // GET /api/employees/{employeeId}/performance
-    // Used by:
-    //  - "My Performance" pages
-    //  - Manager/HR drill-downs
-    //
-    // No backend RBAC here – UI RBAC present.
     // ------------------------------------------------
     @GetMapping("/{employeeId}/performance")
     public ResponseEntity<List<PerformanceReview>> getPerformanceReviews(
@@ -91,11 +86,13 @@ public class PerformanceController {
         if (list == null) {
             return ResponseEntity.ok(Collections.emptyList());
         }
-        // Sort latest period first (e.g. 2025-Q4, 2025-Q3, ...)
         list.sort(Comparator.comparing(PerformanceReview::getPeriod).reversed());
         return ResponseEntity.ok(list);
     }
 
+    // ------------------------------------------------
+    // POST /api/employees/{employeeId}/performance
+    // ------------------------------------------------
     @PostMapping("/{employeeId}/performance")
     public ResponseEntity<PerformanceReview> createPerformanceReview(
             @PathVariable Long employeeId,
@@ -117,6 +114,9 @@ public class PerformanceController {
         return ResponseEntity.ok(review);
     }
 
+    // ------------------------------------------------
+    // PUT /api/employees/{employeeId}/performance/{reviewId}
+    // ------------------------------------------------
     @PutMapping("/{employeeId}/performance/{reviewId}")
     public ResponseEntity<PerformanceReview> updatePerformanceReview(
             @PathVariable Long employeeId,

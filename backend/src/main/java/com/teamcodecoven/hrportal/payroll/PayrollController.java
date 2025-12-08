@@ -103,7 +103,7 @@ public class PayrollController {
 
     // ------------------------------------------------------------
     // 2) Global payroll: /api/payroll?month=YYYY-MM[&department=...]
-    //    Used by Manager / HR dashboards.
+    //    Used by Manager / HR dashboards
     // ------------------------------------------------------------
     public static class GlobalPayrollRow {
         private Long id;

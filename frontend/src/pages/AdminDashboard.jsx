@@ -30,7 +30,7 @@ export default function AdminDashboard() {
     );
   }
 
-  // Load employees (for counts + departments)
+  // Load employees(for counts + departments)
   useEffect(() => {
     async function loadEmployees() {
       try {
